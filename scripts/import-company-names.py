@@ -22,6 +22,16 @@ for row in rows:
         names[company_id] = name
 if seen != expected:
     raise ValueError(f'CSV IDs differ from the saved catalogue: {len(expected - seen)} missing, {len(seen - expected)} extra.')
+resolutions_path = root / 'data/company-name-resolutions.json'
+if resolutions_path.exists():
+    for record in json.loads(resolutions_path.read_text()):
+        company_id = record['id']
+        name = record['name'].strip()
+        if company_id not in expected or not name or record['url'] != f'https://www.linkedin.com/company/{company_id}/':
+            raise ValueError(f'Invalid company-page resolution: {company_id}.')
+        if company_id in names and names[company_id] != name:
+            raise ValueError(f'Conflicting company-page resolution: {company_id}.')
+        names[company_id] = name
 result = {
     'source': 'Qryvo_LinkedIn_839_Company_IDs_with_Researched_Names.csv',
     'row_count': len(rows),

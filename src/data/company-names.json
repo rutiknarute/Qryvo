@@ -1,8 +1,8 @@
 {
   "source": "Qryvo_LinkedIn_839_Company_IDs_with_Researched_Names.csv",
   "row_count": 839,
-  "named_row_count": 486,
-  "unresolved_row_count": 353,
+  "named_row_count": 488,
+  "unresolved_row_count": 351,
   "names": {
     "10043": "Hyland",
     "1009": "IBM",
@@ -204,6 +204,7 @@
     "2014725": "Redis",
     "2017": "Qualcomm",
     "2018": "Applied Materials",
+    "20226": "Splunk",
     "2029": "Nike",
     "20299330": "Pinecone",
     "2057437": "Scopely",
@@ -385,6 +386,7 @@
     "4328": "Logitech",
     "434598": "Flywire",
     "4413": "Paramount Pictures",
+    "444310": "The Walt Disney Studios",
     "455737": "JFrog",
     "4599": "Southwest Airlines",
     "4661": "Birlasoft",
