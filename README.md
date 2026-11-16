@@ -16,7 +16,7 @@ Open the printed local URL. Production build: `npm run build`. Run the data and 
 ## Features
 
 - All 16 original company groups, 980 company references, and 839 distinct IDs.
-- Two exact original Boolean presets, including duplicate terms and punctuation.
+- Two exact original Boolean presets, plus the later New Grad · Software & AI example as the default preset. Its query joins early-career terms AND software/AI role titles.
 - Separate batch searches by default; optional stable-deduplicated union mode.
 - Date, United States/anywhere location, and recency/relevance filters.
 - Per-search open, copy, full URL inspection, bulk copy, CSV export, and full group/preset matrix export.
@@ -26,13 +26,15 @@ Open the printed local URL. Production build: `npm run build`. Run the data and 
 
 ## Data and source preservation
 
-The exact source data is in `src/data/seed.json`. To extend the library, use the application or add a new unique ID to this file. Each group needs a name, numeric string `company_ids`, and its unchanged original `source_url`. The ordered IDs must match the original URL's `f_C` parameter. Queries are plain strings: preserve their content exactly. The earlier 50-company reference remains outside the core groups.
+The exact source data is in `src/data/seed.json`. To extend the library, use the application or add a new unique ID to this file. Each group needs a name, numeric string `company_ids`, and its unchanged original `source_url`. The ordered IDs must match the original URL's `f_C` parameter. Queries are plain strings: preserve their content exactly. The earlier 50-company reference remains outside the core groups. Later built-in presets are added in `src/catalogue.ts`, so the original seed file stays intact.
 
 Original built-in entries are protected from conflicting JSON imports. Imports validate completely before merging. They never replace an existing original query with an edited version; use a distinct preset ID for a variant. All custom data is local to the current browser and origin. Use JSON export to move or back up your library.
 
 ## Validation and limits
 
-The tests compare all 32 generated searches against the independently provided CSV by decoded parameters, verify exact query/ID round trips and original source preservation, reject malformed imports, check stable unions and CSV escaping, and exercise the main UI flow in a DOM environment.
+Generated links use `/jobs/search-results/`, with `%20`-encoded spaces, the selected exact query in `keywords`, and the selected group IDs in `f_C`. Date, location, and sort come from the builder controls. Source job IDs and tracking parameters are excluded.
+
+The tests compare the original 32 group/query combinations against the independently provided CSV by decoded parameters (the route now follows the user’s later `/jobs/search-results/` example), and compare the new default query against that exact example URL. They verify exact query/ID round trips and original source preservation, reject malformed imports, check stable unions and CSV escaping, and exercise the main UI flow in a DOM environment.
 
 Production compilation and DOM interaction tests are automated. The native browser preview service was unavailable during this build, so visual checks at desktop/mobile sizes and live LinkedIn filter verification remain unverified. The CSS includes layouts for 375px, tablet, landscape, and desktop widths, plus reduced motion and touch-target rules, but these are not a substitute for visual browser QA.
 

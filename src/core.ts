@@ -94,13 +94,13 @@ export function generateUrl(
     throw new Error("Select a group with valid numeric company IDs.");
   if (!preset.query.trim())
     throw new Error("Select a Boolean preset with a non-empty query.");
-  const u = new URL("https://www.linkedin.com/jobs/search/");
+  const u = new URL("https://www.linkedin.com/jobs/search-results/");
   u.searchParams.set("keywords", preset.query);
   u.searchParams.set("f_C", group.company_ids.join(","));
   if (options.date) u.searchParams.set("f_TPR", options.date);
   if (options.geoId) u.searchParams.set("geoId", options.geoId);
   if (options.sortBy) u.searchParams.set("sortBy", options.sortBy);
-  return u.toString();
+  return u.toString().replace(/\+/g, "%20");
 }
 export function generateSearches(
   groups: Group[],

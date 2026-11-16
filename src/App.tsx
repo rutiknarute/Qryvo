@@ -41,7 +41,9 @@ import {
 } from "./core";
 import type { Config, Group, Options, Preset, SearchResult } from "./core";
 
-const seed = seedData as Config;
+import { catalogue, examplePreset } from "./catalogue";
+
+const seed = catalogue;
 const dateLabels: Record<string, string> = {
   r86400: "Past 24 hours",
   r604800: "Past week",
@@ -165,7 +167,7 @@ export default function App() {
   const [config, setConfig] = useState<Config>(initialConfig);
   const [view, setView] = useState<View>(getView);
   const [selected, setSelected] = useState<string[]>([]);
-  const [presetId, setPresetId] = useState("new-grad");
+  const [presetId, setPresetId] = useState(examplePreset.id);
   const [options, setOptions] = useState<Options>({ ...defaults });
   const [search, setSearch] = useState("");
   const [groupTab, setGroupTab] = useState("all");
@@ -205,7 +207,10 @@ export default function App() {
   const mainRef = useRef<HTMLElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
   const groups = config.groups;
-  const presets = config.boolean_presets;
+  const presets = [
+    ...config.boolean_presets.filter((p) => p.id === examplePreset.id),
+    ...config.boolean_presets.filter((p) => p.id !== examplePreset.id),
+  ];
   const preset = presets.find((p) => p.id === presetId) || presets[0];
   const chosen = groups.filter((g) => selected.includes(g.id));
   const totalCompanies = new Set(groups.flatMap((g) => g.company_ids)).size;
@@ -771,7 +776,8 @@ export default function App() {
                             onChange={() => setPresetId(p.id)}
                           />
                           <span className="preset-option-icon">
-                            {p.id === "new-grad" ? (
+                            {p.id === "new-grad" ||
+                            p.id === examplePreset.id ? (
                               <GraduationCap size={21} />
                             ) : (
                               <Code size={21} />
@@ -786,11 +792,13 @@ export default function App() {
                                   : p.name}
                             </strong>
                             <small>
-                              {p.id === "new-grad"
-                                ? "Early career. Fresh possibilities."
-                                : p.id === "software"
-                                  ? "Build, develop, and create."
-                                  : "Your custom Boolean search"}
+                              {p.id === examplePreset.id
+                                ? "Early-career AND software/AI roles."
+                                : p.id === "new-grad"
+                                  ? "Early career. Fresh possibilities."
+                                  : p.id === "software"
+                                    ? "Build, develop, and create."
+                                    : "Your custom Boolean search"}
                             </small>
                           </span>
                         </label>

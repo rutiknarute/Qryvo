@@ -36,7 +36,7 @@ test("all 16 groups retain original names, ordered numeric IDs, and sources", ()
   assert.equal(validateConfig(seed), seed);
 });
 
-test("32 generated searches match the independently supplied CSV fixture", () => {
+test("32 original combinations retain fixture filters on the search-results route", () => {
   const rows = readFileSync(new URL("./baseline.csv", import.meta.url), "utf8")
     .trim()
     .split(/\r?\n/)
@@ -53,10 +53,8 @@ test("32 generated searches match the independently supplied CSV fixture", () =>
     assert.equal(group.company_ids.length, Number(count));
     const actual = new URL(generateUrl(group, preset));
     const expected = new URL(url);
-    assert.equal(
-      actual.origin + actual.pathname,
-      expected.origin + expected.pathname,
-    );
+    assert.equal(actual.origin, expected.origin);
+    assert.equal(actual.pathname, "/jobs/search-results/");
     assert.deepEqual([...actual.searchParams], [...expected.searchParams]);
     assert.equal(actual.searchParams.get("keywords"), preset.query);
     assert.deepEqual(
@@ -192,4 +190,30 @@ test("CSV exports every pair and safely quotes custom names and full URLs", () =
   );
   assert.ok(text.includes('"\'=SUM(1,2) ""quoted"""'));
   assert.ok(text.includes(matrix[0].url));
+});
+
+test("the later example produces the same query, company filter, geography and date on the results route", async () => {
+  const { examplePreset, catalogue } = await import("../src/catalogue.ts");
+  const fixture = JSON.parse(
+    readFileSync(
+      new URL("./fixtures/linkedin-example.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  const expected = new URL(fixture.url);
+  const group = parseGroup("Example companies", fixture.url, "example");
+  const result = new URL(generateUrl(group, examplePreset, defaults));
+  assert.equal(
+    result.origin + result.pathname,
+    expected.origin + expected.pathname,
+  );
+  for (const key of ["keywords", "f_C", "geoId", "f_TPR"])
+    assert.equal(result.searchParams.get(key), expected.searchParams.get(key));
+  assert.equal(group.company_ids.length, 50);
+  assert.equal(result.searchParams.get("sortBy"), "DD");
+  for (const key of ["currentJobId", "eBP", "refId", "trackingId", "start"])
+    assert.equal(result.searchParams.has(key), false);
+  assert.ok(result.href.includes("%20AND%20"));
+  assert.deepEqual(catalogue.boolean_presets.slice(0, 2), seed.boolean_presets);
+  assert.equal(group.source_url, fixture.url);
 });

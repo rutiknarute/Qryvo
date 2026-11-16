@@ -262,3 +262,49 @@ test("JSON import adds new groups, rejects conflicts atomically, and stays avail
     screen.getByRole("checkbox", { name: "Select Imported collection" }),
   );
 });
+
+test("the example preset becomes available in an existing browser and the open link uses current selections", async () => {
+  const { examplePreset } = await import("../src/catalogue.ts");
+  localStorage.setItem("searchdesk-config", JSON.stringify(seed));
+  render(<App />);
+  const defaultRadio = screen.getByRole("radio", {
+    name: /New Grad · Software & AI/,
+  }) as HTMLInputElement;
+  assert.equal(defaultRadio.checked, true);
+  await user.click(screen.getByRole("checkbox", { name: "Select Top 1 (25)" }));
+  await user.click(
+    screen.getByRole("button", { name: /Generate search links/ }),
+  );
+  const opened = (await screen.findByRole("link", {
+    name: "Open LinkedIn",
+  })) as HTMLAnchorElement;
+  const first = new URL(opened.href);
+  assert.equal(first.pathname, "/jobs/search-results/");
+  assert.equal(first.searchParams.get("keywords"), examplePreset.query);
+  assert.equal(
+    first.searchParams.get("f_C"),
+    seed.groups[0].company_ids.join(","),
+  );
+  assert.equal(first.searchParams.get("geoId"), "103644278");
+  assert.equal(first.searchParams.get("f_TPR"), "r86400");
+  await user.selectOptions(screen.getByLabelText("Date posted"), "r604800");
+  await user.selectOptions(screen.getByLabelText("Location"), "");
+  await user.selectOptions(screen.getByLabelText("Sort by"), "R");
+  await user.click(
+    screen.getByRole("button", { name: /Generate search links/ }),
+  );
+  const updated = new URL(
+    (screen.getByRole("link", { name: "Open LinkedIn" }) as HTMLAnchorElement)
+      .href,
+  );
+  assert.equal(updated.searchParams.get("keywords"), examplePreset.query);
+  assert.equal(updated.searchParams.get("f_C"), first.searchParams.get("f_C"));
+  assert.equal(updated.searchParams.get("f_TPR"), "r604800");
+  assert.equal(updated.searchParams.has("geoId"), false);
+  assert.equal(updated.searchParams.get("sortBy"), "R");
+  assert.equal(
+    JSON.parse(localStorage.getItem("searchdesk-config")!).boolean_presets
+      .length,
+    3,
+  );
+});
