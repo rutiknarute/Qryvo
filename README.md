@@ -18,9 +18,9 @@ Open the printed local URL. Production build: `npm run build`. Run the data and 
 - All 16 company groups in a vertical list of full-width LinkedIn buttons, with accurate labels and unchanged counts: 980 company references and 839 distinct IDs. Each row shows its name and company count in parentheses, followed by New grad and Software buttons for the two exact queries. Both buttons use the current filters; use checkboxes for batches.
 - Only the two exact supplied Boolean queries: New Graduate (default) and Software & Development. Retired or custom queries are removed from saved configuration on load; saved company groups are retained.
 - Separate batch searches by default; optional stable-deduplicated union mode.
-- Date, United States/anywhere location, and recency/relevance filters.
+- Date, United States/anywhere location, recency/relevance, and experience filters. Entry level is the default (`f_E=2`); Entry level & Associate (`f_E=2,3`) and Any level are also available. Both direct buttons and batch output use the selected level.
 - Per-search open, copy, full URL inspection, bulk copy, CSV export, and full group/preset matrix export.
-- Companies Data tab: click a group to expand all company IDs in source order, with direct LinkedIn company-page links and the unchanged original group URL. Company names from the supplied CSV are shown alongside their exact LinkedIn IDs. The CSV has 69 named rows and 911 blank name fields; missing names show “Name unavailable”.
+- Companies Data tab: click a group to expand all company IDs in source order, with direct LinkedIn company-page links. Company names from the supplied CSV are shown alongside their exact LinkedIn IDs. The CSV has 69 named rows and 911 blank name fields; missing names show “Name unavailable”.
 - Local persistence, saved searches, and non-destructive versioned JSON import/export.
 - Three navigation sections: Search builder, Boolean presets, and Companies Data. Dark, high-contrast query buttons with hover, active, and visible keyboard-focus states. Native checkboxes/radios/selects, Radix dialogs, focus restoration, and reduced-motion support.
 
@@ -32,11 +32,13 @@ Original built-in entries are protected from conflicting JSON imports. Imports v
 
 ## Validation and limits
 
-Generated links use `/jobs/search-results/`, with `%20`-encoded spaces, the selected exact query in `keywords`, and the selected group IDs in `f_C`. Date, location, and sort come from the builder controls. Source job IDs and tracking parameters are excluded.
+Generated links use `/jobs/search-results/`, with `%20`-encoded spaces, the selected exact query in `keywords`, and the selected group IDs in `f_C`. Date, location, sort, and experience level come from the builder controls. Older saved searches without an experience setting restore with the entry-level default. Source job IDs and tracking parameters are excluded.
 
-The tests compare the original 32 group/query combinations against the independently provided CSV by decoded parameters, and verify that saved data restores only the two original exact queries. They verify exact query/ID round trips and original source preservation, reject malformed imports, check stable unions and CSV escaping, and exercise the main UI flow in a DOM environment.
+The tests compare the original 32 group/query combinations against the independently provided CSV by decoded parameters plus the new entry-level filter, and verify that saved data restores only the two original exact queries. They verify exact query/ID round trips and original source preservation, reject malformed imports, check stable unions and CSV escaping, and exercise the main UI flow in a DOM environment.
 
 Production compilation and DOM interaction tests are automated. The native browser preview service was unavailable during this build, so visual checks at desktop/mobile sizes and live LinkedIn filter verification remain unverified. The CSS includes layouts for 375px, tablet, landscape, and desktop widths, plus reduced motion and touch-target rules, but these are not a substitute for visual browser QA.
+
+LinkedIn’s AI-powered job search matches intent rather than strictly matching keywords, so Boolean exclusions alone may not reliably exclude senior titles. The separate experience filter narrows results by LinkedIn’s experience classification; it cannot guarantee every returned title or employer classification is correct. See [LinkedIn’s AI search guidance](https://www.linkedin.com/help/linkedin/answer/a6889044).
 
 Generated links are labeled **Not live verified**. No LinkedIn requests, scraping, or login are used by the generator. LinkedIn can change URL handling or ignore long queries/company filters. To verify manually, open groups 01 (25 IDs), 04 (60), 08 (100), and 13 (50) and check active company filters and keywords; try both Boolean presets for one group. Do not interpret URL format validation as proof that LinkedIn honored every filter.
 

@@ -55,6 +55,7 @@ test("32 original combinations retain fixture filters on the search-results rout
     const expected = new URL(url);
     assert.equal(actual.origin, expected.origin);
     assert.equal(actual.pathname, "/jobs/search-results/");
+    expected.searchParams.set("f_E", "2");
     assert.deepEqual([...actual.searchParams], [...expected.searchParams]);
     assert.equal(actual.searchParams.get("keywords"), preset.query);
     assert.deepEqual(
@@ -68,6 +69,25 @@ test("32 original combinations retain fixture filters on the search-results rout
   assert.equal(keys.size, 32);
   assert.equal(seed.boolean_presets[0].query.length, 463);
   assert.equal(seed.boolean_presets[1].query.length, 489);
+});
+
+test("experience filters default to entry level, support associate and any, and restore old options", () => {
+  const group = seed.groups[9];
+  const preset = seed.boolean_presets[1];
+  const legacy = { date: "r86400", geoId: "103644278", sortBy: "DD", mode: "separate" as const };
+  const result = generateSearches([group], preset, legacy)[0];
+  const u = new URL(result.url);
+  assert.equal(u.searchParams.get("f_E"), "2");
+  assert.equal(result.options.experience, "2");
+  assert.equal(u.searchParams.get("keywords"), preset.query);
+  assert.equal(u.searchParams.get("f_C"), group.company_ids.join(","));
+  assert.equal(u.searchParams.get("f_TPR"), "r86400");
+  assert.equal(u.searchParams.get("geoId"), "103644278");
+  for (const experience of ["2", "2,3", ""]) {
+    const url = new URL(generateUrl(group, preset, { ...defaults, experience }));
+    assert.equal(url.searchParams.get("f_E"), experience || null);
+  }
+  assert.throws(() => generateUrl(group, preset, { ...defaults, experience: "4" }), /experience/);
 });
 
 test("batch stays separate, preset switches only keywords, merge is stable and explicit", () => {

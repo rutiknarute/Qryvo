@@ -26,6 +26,7 @@ import { Database } from "@phosphor-icons/react";
 import {
   csv,
   defaults,
+  experienceLabels,
   generateSearches,
   generateUrl,
   displayGroupName,
@@ -173,6 +174,8 @@ export default function App() {
               seed.boolean_presets.some((p) => p.id === x.presetId) &&
               x.options &&
               ["separate", "merged"].includes(x.options.mode) &&
+              (x.options.experience === undefined ||
+                Object.hasOwn(experienceLabels, x.options.experience)) &&
               ["date", "geoId", "sortBy"].every(
                 (k) => typeof x.options[k] === "string",
               ),
@@ -553,6 +556,21 @@ export default function App() {
                           <option value="merged">Combine groups</option>
                         </select>
                       </label>
+                      <label className="experience-filter">
+                        Experience level
+                        <select
+                          value={options.experience ?? defaults.experience}
+                          onChange={(e) =>
+                            setOptions((o) => ({ ...o, experience: e.target.value }))
+                          }
+                        >
+                          {Object.entries(experienceLabels).map(([v, l]) => (
+                            <option key={v} value={v}>
+                              {l}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
                     </div>
                     {options.mode === "merged" ? (
                       <p className="filter-warning">
@@ -650,6 +668,8 @@ export default function App() {
                             {r.group.company_ids.length} companies{" "}
                             <span className="dot">·</span>{" "}
                             {dateLabels[r.options.date]}
+                            {" "}<span className="dot">·</span>{" "}
+                            {experienceLabels[r.options.experience ?? defaults.experience!]}
                           </span>
                           <small>Not live verified on LinkedIn</small>
                         </div>
@@ -756,7 +776,7 @@ export default function App() {
                           onClick={() => {
                             setSelected(h.groupIds);
                             setPresetId(h.presetId);
-                            setOptions(h.options);
+                            setOptions({ ...defaults, ...h.options });
                             setResults(
                               generateSearches(
                                 groups.filter((g) => h.groupIds.includes(g.id)),
@@ -850,7 +870,7 @@ export default function App() {
                   <h2>Every possible search</h2>
                   <p>
                     Export all {groups.length * presets.length} group and preset
-                    combinations with the default 24-hour, United States
+                    combinations with the default entry-level, 24-hour, United States
                     filters.
                   </p>
                   <Button onClick={exportMatrix}>
@@ -945,6 +965,10 @@ export default function App() {
                   ? "Most recent"
                   : "Most relevant"}
               </dd>
+            </div>
+            <div>
+              <dt>Experience level</dt>
+              <dd>{experienceLabels[modal.result.options.experience ?? defaults.experience!]}</dd>
             </div>
             <div>
               <dt>Exact query</dt>

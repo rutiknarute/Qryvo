@@ -26,6 +26,7 @@ export type Options = {
   date: string;
   geoId: string;
   sortBy: string;
+  experience?: string;
   mode: "separate" | "merged";
 };
 export type SearchResult = {
@@ -38,7 +39,13 @@ export const defaults: Options = {
   date: "r86400",
   geoId: "103644278",
   sortBy: "DD",
+  experience: "2",
   mode: "separate",
+};
+export const experienceLabels: Record<string, string> = {
+  "2": "Entry level",
+  "2,3": "Entry level & Associate",
+  "": "Any level",
 };
 export const auditIds = new Set(["04", "05", "06", "07", "10"]);
 
@@ -124,12 +131,16 @@ export function generateUrl(
     throw new Error("Select a group with valid numeric company IDs.");
   if (!preset.query.trim())
     throw new Error("Select a Boolean preset with a non-empty query.");
+  const experience = options.experience ?? defaults.experience!;
+  if (!Object.hasOwn(experienceLabels, experience))
+    throw new Error("Select a supported experience level.");
   const u = new URL("https://www.linkedin.com/jobs/search-results/");
   u.searchParams.set("keywords", preset.query);
   u.searchParams.set("f_C", group.company_ids.join(","));
   if (options.date) u.searchParams.set("f_TPR", options.date);
   if (options.geoId) u.searchParams.set("geoId", options.geoId);
   if (options.sortBy) u.searchParams.set("sortBy", options.sortBy);
+  if (experience) u.searchParams.set("f_E", experience);
   return u.toString().replace(/\+/g, "%20");
 }
 export function generateSearches(
@@ -152,7 +163,7 @@ export function generateSearches(
   return out.map((group) => ({
     group,
     preset,
-    options: { ...options },
+    options: { ...defaults, ...options },
     url: generateUrl(group, preset, options),
   }));
 }

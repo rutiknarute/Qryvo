@@ -38,14 +38,6 @@ export default function CompaniesData({ groups }: { groups: Group[] }) {
                   aria-label={`${displayGroupName(group)} companies`}
                   className="company-data-panel"
                 >
-                  <a
-                    className="company-data-source"
-                    href={group.source_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    View original URL <ArrowSquareOut size={15} />
-                  </a>
                   <ul className="company-directory">
                     {group.company_ids.map((id, index) => (
                       <li key={`${id}-${index}`}>

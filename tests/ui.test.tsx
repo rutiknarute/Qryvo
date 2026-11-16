@@ -195,12 +195,8 @@ test("Companies Data opens each saved URL membership without changing IDs or cou
       group.company_ids.map((id) => `/company/${id}/`),
     );
     assert.equal(
-      (
-        within(panel).getByRole("link", {
-          name: "View original URL",
-        }) as HTMLAnchorElement
-      ).href,
-      group.source_url,
+      within(panel).queryByRole("link", { name: "View original URL" }),
+      null,
     );
     assert.ok(
       links.every(
@@ -405,6 +401,7 @@ test("each company row shows its count and two direct buttons with exact queries
       assert.equal(button.textContent?.trim(), label);
       const url = new URL(button.href);
       assert.equal(url.pathname, "/jobs/search-results/");
+      assert.equal(url.searchParams.get("f_E"), "2");
       assert.equal(
         url.searchParams.get("keywords"),
         seed.boolean_presets[j].query,
@@ -441,4 +438,40 @@ test("each company row shows its count and two direct buttons with exact queries
   }
   const stored = JSON.parse(localStorage.getItem("searchdesk-config")!);
   assert.deepEqual(stored.groups, seed.groups);
+});
+
+test("experience choice updates both direct actions and batch snapshots", async () => {
+  render(<App />);
+  const experience = screen.getByLabelText("Experience level") as HTMLSelectElement;
+  assert.equal(experience.value, "2");
+  const directLinks = () => screen.getAllByRole("link", {
+    name: /^Open .+ with (New grad|Software) on LinkedIn$/,
+  }) as HTMLAnchorElement[];
+  for (const value of ["2,3", "", "2"]) {
+    await user.selectOptions(experience, value);
+    assert.ok(directLinks().every(link => new URL(link.href).searchParams.get("f_E") === (value || null)));
+  }
+  await user.selectOptions(experience, "2,3");
+  await user.click(screen.getByRole("checkbox", { name: "Select Forbes (40)" }));
+  await user.click(screen.getByRole("radio", { name: "Software & Development" }));
+  await user.click(screen.getByRole("button", { name: /Generate search links/ }));
+  const result = await screen.findByRole("link", { name: "Open LinkedIn" }) as HTMLAnchorElement;
+  const savedHref = result.href;
+  const url = new URL(savedHref);
+  assert.equal(url.searchParams.get("f_E"), "2,3");
+  assert.equal(url.searchParams.get("keywords"), seed.boolean_presets[1].query);
+  assert.equal(url.searchParams.get("f_C"), seed.groups[9].company_ids.join(","));
+  assert.equal(url.searchParams.get("f_TPR"), "r86400");
+  assert.equal(url.searchParams.get("geoId"), "103644278");
+  for (const key of ["currentJobId", "eBP", "refId", "trackingId"])
+    assert.equal(url.searchParams.has(key), false);
+  await user.selectOptions(experience, "");
+  assert.equal(result.href, savedHref);
+  await user.click(screen.getByRole("button", { name: "Inspect URL" }));
+  const dialog = await screen.findByRole("dialog");
+  assert.ok(within(dialog).getByText("Entry level & Associate"));
+  assert.equal((within(dialog).getByRole("textbox", { name: "Full URL" }) as HTMLTextAreaElement).value, savedHref);
+  await user.keyboard("{Escape}");
+  const history = JSON.parse(localStorage.getItem("searchdesk-history")!);
+  assert.equal(history[0].options.experience, "2,3");
 });
