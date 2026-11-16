@@ -556,16 +556,6 @@ export default function App() {
             searchdesk<span className="brand-dot">.</span>
           </span>
         </a>
-        <div className="workspace-switch">
-          <span className="workspace-icon">
-            <FolderSimple size={18} />
-          </span>
-          <div>
-            <strong>My workspace</strong>
-            <span>Personal workspace</span>
-          </div>
-          <span className="workspace-live" />
-        </div>
         <p className="nav-label">WORKSPACE</p>
         <nav aria-label="Main navigation">
           {(
@@ -582,11 +572,6 @@ export default function App() {
                 name: "Boolean presets",
                 icon: BracketsCurly,
                 count: presets.length,
-              },
-              {
-                id: "history",
-                name: "Recent searches",
-                icon: ClockCounterClockwise,
               },
             ] as const
           ).map((n) => (
@@ -681,54 +666,6 @@ export default function App() {
         <main id="main-content" tabIndex={-1} ref={mainRef}>
           {view === "builder" && (
             <>
-              <section className="welcome">
-                <div>
-                  <div className="eyebrow">
-                    <span /> YOUR JOB SEARCH, WITH INTENTION
-                  </div>
-                  <h1>
-                    Your next move,
-                    <br />
-                    <span>made simpler.</span>
-                  </h1>
-                  <p>
-                    Great opportunities start with a focused search.
-                    <br className="desktop-br" /> Bring your companies and
-                    Boolean queries together.
-                  </p>
-                </div>
-                <div className="search-visual" aria-hidden="true">
-                  <div className="visual-grid" />
-                  <div className="visual-chip chip-one">
-                    <span>
-                      <Buildings size={18} />
-                    </span>
-                    <div>
-                      <strong>Your companies</strong>
-                      <small>{totalCompanies} possibilities</small>
-                    </div>
-                    <CheckCircle size={18} weight="fill" />
-                  </div>
-                  <div className="visual-connector" />
-                  <div className="visual-chip chip-two">
-                    <span>
-                      <Code size={18} />
-                    </span>
-                    <div>
-                      <strong>Your search, refined</strong>
-                      <small>
-                        <b>OR</b> opportunity <b>NOT</b> noise
-                      </small>
-                    </div>
-                  </div>
-                  <div className="visual-result">
-                    <Link size={18} />
-                    <strong>One step closer.</strong>
-                    <ArrowSquareOut size={16} />
-                  </div>
-                  <Sparkle size={23} className="visual-spark" />
-                </div>
-              </section>
               <section className="stats-grid" aria-label="Your search library">
                 <div className="stat-card">
                   <span className="stat-icon blue">
@@ -781,7 +718,7 @@ export default function App() {
               </section>
               <div className="section-intro">
                 <div>
-                  <h2>Build your next search</h2>
+                  <h1 className="builder-title">Build your next search</h1>
                   <p>A few choices. A more focused path forward.</p>
                 </div>
                 <span className="local-pill">
@@ -794,7 +731,7 @@ export default function App() {
                     <div className="step-title">
                       <span className="step-number">1</span>
                       <div>
-                        <h3>Choose your companies</h3>
+                        <h2>Choose your companies</h2>
                         <p>Select one or more saved company groups.</p>
                       </div>
                     </div>
@@ -816,7 +753,7 @@ export default function App() {
                     <div className="step-title">
                       <span className="step-number">2</span>
                       <div>
-                        <h3>Set your search intent</h3>
+                        <h2>Set your search intent</h2>
                         <p>Choose a Boolean preset.</p>
                       </div>
                     </div>
@@ -893,7 +830,7 @@ export default function App() {
                     <div className="step-title">
                       <span className="step-number">3</span>
                       <div>
-                        <h3>Fine-tune the details</h3>
+                        <h2>Fine-tune the details</h2>
                         <p>A little focus goes a long way.</p>
                       </div>
                     </div>
@@ -997,57 +934,48 @@ export default function App() {
                       <small>Opens a world of possibilities on LinkedIn.</small>
                     </div>
                   </section>
-                  <div className="quiet-note">
-                    <CheckCircle size={17} />
-                    <p>
-                      Your original lists and queries stay intact.
-                      <br />
-                      Every search is generated locally.
-                    </p>
-                  </div>
                 </aside>
               </div>
-              <section
-                className="results-section"
-                ref={resultsRef}
-                tabIndex={-1}
-              >
-                <div className="section-intro">
-                  <div>
-                    <h2>
-                      Your search links{" "}
-                      <span className="heading-count">{results.length}</span>
-                    </h2>
-                    <p>
-                      {results.length
-                        ? "Ready for your next opportunity. Open, copy, or take them with you."
-                        : "Your focused searches will appear here."}
-                    </p>
-                  </div>
-                  {results.length > 0 && (
-                    <div className="result-bulk-actions">
-                      <Button
-                        onClick={() =>
-                          copy(results.map((r) => r.url).join("\n"))
-                        }
-                      >
-                        <Copy size={16} /> Copy all
-                      </Button>
-                      <Button
-                        onClick={() =>
-                          download(
-                            csv(results),
-                            "searchdesk-searches.csv",
-                            "text/csv;charset=utf-8",
-                          )
-                        }
-                      >
-                        <DownloadSimple size={16} /> Export CSV
-                      </Button>
+              {results.length > 0 && (
+                <section
+                  className="results-section"
+                  ref={resultsRef}
+                  tabIndex={-1}
+                >
+                  <div className="section-intro">
+                    <div>
+                      <h2>
+                        Your search links{" "}
+                        <span className="heading-count">{results.length}</span>
+                      </h2>
+                      <p>
+                        Ready for your next opportunity. Open, copy, or take
+                        them with you.
+                      </p>
                     </div>
-                  )}
-                </div>
-                {results.length ? (
+                    {results.length > 0 && (
+                      <div className="result-bulk-actions">
+                        <Button
+                          onClick={() =>
+                            copy(results.map((r) => r.url).join("\n"))
+                          }
+                        >
+                          <Copy size={16} /> Copy all
+                        </Button>
+                        <Button
+                          onClick={() =>
+                            download(
+                              csv(results),
+                              "searchdesk-searches.csv",
+                              "text/csv;charset=utf-8",
+                            )
+                          }
+                        >
+                          <DownloadSimple size={16} /> Export CSV
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                   <div className="results-list">
                     {results.map((r, i) => (
                       <article
@@ -1096,28 +1024,8 @@ export default function App() {
                       </article>
                     ))}
                   </div>
-                ) : (
-                  <div className="empty-results">
-                    <div className="empty-illustration" aria-hidden="true">
-                      <span />
-                      <span />
-                      <div>
-                        <Link size={24} />
-                      </div>
-                    </div>
-                    <h3>A more intentional search starts here</h3>
-                    <p>
-                      Choose your company groups and a Boolean preset,
-                      <br />
-                      then generate your first set of search links.
-                    </p>
-                    <span className="empty-steps">
-                      Select companies <CaretRight size={12} /> Set your intent{" "}
-                      <CaretRight size={12} /> Find your next move
-                    </span>
-                  </div>
-                )}
-              </section>
+                </section>
+              )}
             </>
           )}
           {view === "groups" && (
@@ -1381,19 +1289,6 @@ export default function App() {
               </section>
             </>
           )}
-          <footer className="page-footer">
-            <span>Made for a more focused next chapter.</span>
-            <span>
-              Independent tool · Not affiliated with LinkedIn{" "}
-              <span className="footer-dot">·</span>{" "}
-              <button
-                className="text-button"
-                onClick={() => openModal({ type: "help" })}
-              >
-                About Searchdesk <ArrowSquareOut size={12} />
-              </button>
-            </span>
-          </footer>
         </main>
       </div>
       <div

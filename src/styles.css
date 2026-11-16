@@ -2615,3 +2615,39 @@ textarea {
     display: none;
   }
 }
+
+/* Compact dashboard layout after removing introductory and empty-state sections. */
+main {
+  padding-bottom: 32px;
+}
+.nav-label {
+  margin-top: 32px;
+}
+.builder-title {
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: -0.4px;
+  line-height: 1.5;
+}
+@media (max-width: 767px) {
+  .builder-title {
+    font-size: 17px;
+  }
+}
+
+.step-title h2 {
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: -0.15px;
+}
+@media (max-width: 1023px) {
+  .builder-right .step-title h2 {
+    font-size: 11px;
+  }
+}
+@media (max-width: 767px) {
+  .step-title h2,
+  .builder-right .step-title h2 {
+    font-size: 12px;
+  }
+}
