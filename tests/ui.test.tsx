@@ -137,58 +137,70 @@ test("initial state, all-group batch, preset switch, exact URL copy and inspect"
   assert.equal(history[0].groupIds.length, 16);
 });
 
-test("custom group validates URL, retains exact source and IDs, persists and stays selectable", async () => {
+test("Companies Data opens each saved URL membership without changing IDs or counts", async () => {
   render(<App />);
-  await user.click(screen.getByRole("button", { name: "Add group" }));
-  const dialog = await screen.findByRole("dialog");
-  await user.type(
-    within(dialog).getByRole("textbox", { name: "Group name" }),
-    "My target companies",
+  const nav = screen.getByRole("navigation", { name: "Main navigation" });
+  assert.deepEqual(
+    within(nav)
+      .getAllByRole("link")
+      .map((x) => x.getAttribute("href")),
+    ["#builder", "#presets", "#companies-data"],
   );
-  await user.type(
-    within(dialog).getByRole("textbox", { name: "Original LinkedIn Jobs URL" }),
-    "https://example.com/jobs/search/?f_C=1",
+  assert.equal(screen.queryByRole("button", { name: "Add group" }), null);
+  assert.equal(
+    screen.queryByRole("heading", { name: "Choose your companies" }),
+    null,
   );
-  await user.click(
-    within(dialog).getByRole("button", { name: "Save company group" }),
-  );
-  assert.match(screen.getByRole("alert").textContent!, /linkedin.com/);
-  const url =
-    "https://www.linkedin.com/jobs/search/?f_C=002%2C1%2C002&currentJobId=5";
-  await user.clear(
-    within(dialog).getByRole("textbox", { name: "Original LinkedIn Jobs URL" }),
-  );
-  await user.type(
-    within(dialog).getByRole("textbox", { name: "Original LinkedIn Jobs URL" }),
-    url,
-  );
-  await user.click(
-    within(dialog).getByRole("button", { name: "Save company group" }),
-  );
-  await waitFor(() => assert.equal(screen.queryByRole("dialog"), null));
-  await user.click(
-    screen.getByRole("checkbox", { name: "Select My target companies" }),
-  );
-  await user.click(
-    screen.getByRole("button", { name: /Generate search links/ }),
-  );
-  const link = (await screen.findByRole("link", {
-    name: "Open LinkedIn",
-  })) as HTMLAnchorElement;
-  assert.equal(new URL(link.href).searchParams.get("f_C"), "002,1,002");
-  const stored = JSON.parse(localStorage.getItem("searchdesk-config")!);
-  assert.equal(stored.groups.length, 17);
-  assert.equal(stored.groups.at(-1).source_url, url);
+  assert.equal(screen.queryByText("16 company groups"), null);
+  await user.click(screen.getByRole("link", { name: "Companies Data" }));
+  await screen.findByRole("heading", { name: "Companies Data" });
+  for (const [i, name] of [
+    "Top 1 (25)",
+    "Top 4 (60)",
+    "Top 8-9 (100)",
+  ].entries()) {
+    const group = seed.groups[[0, 3, 7][i]];
+    const toggle = screen.getByRole("button", { name });
+    assert.equal(toggle.getAttribute("aria-expanded"), "false");
+    await user.click(toggle);
+    assert.equal(toggle.getAttribute("aria-expanded"), "true");
+    const panel = screen.getByRole("region", { name: `${name} companies` });
+    const links = within(panel).getAllByRole("link", {
+      name: /Company ID/,
+    }) as HTMLAnchorElement[];
+    assert.equal(links.length, group.company_ids.length);
+    assert.deepEqual(
+      links.map((x) => new URL(x.href).pathname),
+      group.company_ids.map((id) => `/company/${id}/`),
+    );
+    assert.equal(
+      (
+        within(panel).getByRole("link", {
+          name: "View original URL",
+        }) as HTMLAnchorElement
+      ).href,
+      group.source_url,
+    );
+    assert.ok(
+      links.every(
+        (x) => x.target === "_blank" && x.rel === "noopener noreferrer",
+      ),
+    );
+    await user.click(toggle);
+    assert.equal(
+      screen.queryByRole("region", { name: `${name} companies` }),
+      null,
+    );
+  }
 });
 
-test("searching groups keeps both direct query actions and batch selection available", async () => {
+test("the compact company list retains both direct query actions and batch selection", async () => {
   render(<App />);
-  assert.equal(screen.queryByRole("button", { name: /Favorite/ }), null);
-  await user.type(
-    screen.getByRole("textbox", { name: "Search company groups" }),
-    "Top 4",
+  assert.equal(screen.getAllByRole("checkbox").length, 16);
+  assert.equal(
+    screen.queryByRole("textbox", { name: "Search company groups" }),
+    null,
   );
-  assert.equal(screen.getAllByRole("checkbox").length, 1);
   const grad = screen.getByRole("link", {
     name: "Open Top 4 (60) with New grad on LinkedIn",
   }) as HTMLAnchorElement;
@@ -210,10 +222,14 @@ test("searching groups keeps both direct query actions and batch selection avail
   await user.click(
     screen.getByRole("button", { name: /Generate search links/ }),
   );
-  const generated = (await screen.findByRole("link", {
-    name: "Open LinkedIn",
-  })) as HTMLAnchorElement;
-  assert.equal(generated.href, software.href);
+  assert.equal(
+    (
+      (await screen.findByRole("link", {
+        name: "Open LinkedIn",
+      })) as HTMLAnchorElement
+    ).href,
+    software.href,
+  );
 });
 
 test("JSON import adds new groups, rejects conflicts atomically, and stays available from navigation", async () => {
@@ -259,10 +275,9 @@ test("JSON import adds new groups, rejects conflicts atomically, and stays avail
     assert.match(screen.getByRole("alert").textContent!, /conflicts/),
   );
   assert.equal(localStorage.getItem("searchdesk-config"), before);
-  await user.click(screen.getByRole("link", { name: /Company groups/ }));
-  await screen.findByRole("heading", {
-    name: "Good companies. Great possibilities.",
-  });
+  assert.equal(screen.queryByRole("link", { name: /Company groups/ }), null);
+  await user.click(screen.getByRole("link", { name: "Search builder" }));
+  await screen.findByRole("heading", { name: "Build your next search" });
   assert.ok(
     screen.getByRole("checkbox", { name: "Select Imported collection" }),
   );

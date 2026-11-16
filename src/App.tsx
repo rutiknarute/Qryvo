@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { FormEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
   ArrowRight,
@@ -14,8 +14,6 @@ import {
   FolderSimple,
   Info,
   Link,
-  MagnifyingGlass,
-  Plus,
   Sparkle,
   SquaresFour,
   UploadSimple,
@@ -23,6 +21,8 @@ import {
   X,
 } from "@phosphor-icons/react";
 import seedData from "./data/seed.json";
+import CompaniesData from "./components/CompaniesData";
+import { Database } from "@phosphor-icons/react";
 import {
   csv,
   defaults,
@@ -30,7 +30,6 @@ import {
   generateUrl,
   displayGroupName,
   groupTitle,
-  parseGroup,
   validateConfig,
 } from "./core";
 import type { Config, Options, SearchResult } from "./core";
@@ -48,9 +47,8 @@ const geoLabels: Record<string, string> = {
   "103644278": "United States",
   "": "Anywhere",
 };
-type View = "builder" | "groups" | "presets" | "history" | "settings";
-type Modal =
-  { type: "group" } | { type: "inspect"; result: SearchResult } | null;
+type View = "builder" | "presets" | "companies-data" | "history" | "settings";
+type Modal = { type: "inspect"; result: SearchResult } | null;
 type HistoryItem = {
   id: string;
   created: string;
@@ -75,7 +73,7 @@ function initialConfig() {
 }
 function getView(): View {
   const v = location.hash.slice(1);
-  return ["groups", "presets", "history", "settings"].includes(v)
+  return ["presets", "companies-data", "history", "settings"].includes(v)
     ? (v as View)
     : "builder";
 }
@@ -159,7 +157,6 @@ export default function App() {
   const [selected, setSelected] = useState<string[]>([]);
   const [presetId, setPresetId] = useState("new-grad");
   const [options, setOptions] = useState<Options>({ ...defaults });
-  const [search, setSearch] = useState("");
   const [history, setHistory] = useState<HistoryItem[]>(() => {
     const v = getStored<unknown>("searchdesk-history", []);
     return Array.isArray(v)
@@ -186,7 +183,6 @@ export default function App() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [modal, setModal] = useState<Modal>(null);
   const [toast, setToast] = useState("");
-  const [formError, setFormError] = useState("");
   const [importError, setImportError] = useState("");
   const resultsRef = useRef<HTMLElement>(null);
   const mainRef = useRef<HTMLElement>(null);
@@ -196,18 +192,13 @@ export default function App() {
   const preset = presets.find((p) => p.id === presetId) || presets[0];
   const chosen = groups.filter((g) => selected.includes(g.id));
   const totalCompanies = new Set(groups.flatMap((g) => g.company_ids)).size;
-  const visible = groups.filter((g) =>
-    `${g.id} ${g.name} ${displayGroupName(g)}`
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  );
+  const visible = groups;
   const allVisibleSelected =
     visible.length > 0 && visible.every((g) => selected.includes(g.id));
   const uniqueSelected = new Set(chosen.flatMap((g) => g.company_ids)).size;
   useEffect(() => {
     const fn = () => {
       setView(getView());
-      setSearch("");
       requestAnimationFrame(() => mainRef.current?.focus());
     };
     window.addEventListener("hashchange", fn);
@@ -228,7 +219,6 @@ export default function App() {
     }
   }, [toast]);
   const openModal = (m: Modal) => {
-    setFormError("");
     setModal(m);
   };
   const toggle = (id: string) =>
@@ -290,33 +280,6 @@ export default function App() {
     );
     setToast(`Exported ${matrix.length} group and preset combinations`);
   }
-  function saveGroup(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    try {
-      const group = parseGroup(String(f.get("name")), String(f.get("url")));
-      const duplicate = groups.find(
-        (g) =>
-          g.name.toLowerCase() === group.name.toLowerCase() ||
-          g.company_ids.join(",") === group.company_ids.join(","),
-      );
-      const warnings = [
-        duplicate ? `Similar to ${displayGroupName(duplicate)}` : "",
-        new Set(group.company_ids).size < group.company_ids.length
-          ? "contains duplicate company IDs"
-          : "",
-      ].filter(Boolean);
-      setConfig((v) => ({ ...v, groups: [...v.groups, group] }));
-      setToast(
-        warnings.length
-          ? `Group saved · ${warnings.join("; ")}`
-          : "Company group saved",
-      );
-      setModal(null);
-    } catch (err) {
-      setFormError((err as Error).message);
-    }
-  }
   async function importFile(file?: File) {
     if (!file) return;
     setImportError("");
@@ -337,44 +300,13 @@ export default function App() {
 
   const groupList = (
     <>
-      <div className="group-tools">
-        <div className="search-field">
-          <MagnifyingGlass size={18} />
-          <input
-            aria-label="Search company groups"
-            placeholder="Search groups by name or ID..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          {search && (
-            <button
-              aria-label="Clear group search"
-              className="search-clear"
-              onClick={() => setSearch("")}
-            >
-              <X size={16} />
-            </button>
-          )}
-        </div>
-        <Button onClick={() => openModal({ type: "group" })}>
-          <Plus size={17} />
-          <span>Add group</span>
-        </Button>
-      </div>
       <div className="group-tabs">
-        <span className="group-list-label">
-          {visible.length} company groups
-        </span>
         <button
           className="text-button"
           onClick={selectVisible}
           disabled={!visible.length}
         >
-          {allVisibleSelected
-            ? "Deselect shown"
-            : search
-              ? "Select shown"
-              : "Select all"}
+          {allVisibleSelected ? "Deselect all" : "Select all"}
         </button>
       </div>
       <div className="company-list">
@@ -414,20 +346,6 @@ export default function App() {
           </article>
         ))}
       </div>
-      {!visible.length && (
-        <div className="empty-state compact">
-          <MagnifyingGlass size={28} />
-          <h3>No matching company groups</h3>
-          <p>Try another name or group ID.</p>
-          <Button
-            onClick={() => {
-              setSearch("");
-            }}
-          >
-            Show all groups
-          </Button>
-        </div>
-      )}
       <div className="group-selection">
         <span>
           <span className="selection-dot" />
@@ -464,17 +382,12 @@ export default function App() {
             [
               { id: "builder", name: "Search builder", icon: SquaresFour },
               {
-                id: "groups",
-                name: "Company groups",
-                icon: Buildings,
-                count: groups.length,
-              },
-              {
                 id: "presets",
                 name: "Boolean presets",
                 icon: BracketsCurly,
                 count: presets.length,
               },
+              { id: "companies-data", name: "Companies Data", icon: Database },
             ] as const
           ).map((n) => (
             <a
@@ -550,24 +463,7 @@ export default function App() {
                 </div>
               </div>
               <div className="builder-grid">
-                <section className="panel group-panel">
-                  <div className="panel-heading">
-                    <div className="step-title">
-                      <span className="step-number">1</span>
-                      <div>
-                        <h2>Choose your companies</h2>
-                        <p>
-                          Open New grad or Software, or select groups for a
-                          batch search.
-                        </p>
-                      </div>
-                    </div>
-                    <span className="neutral-badge">
-                      {groups.length} groups
-                    </span>
-                  </div>
-                  {groupList}
-                </section>
+                <section className="panel group-panel">{groupList}</section>
                 <aside className="builder-right">
                   <section className="panel preset-panel">
                     <h2 className="intent-heading">Set your search intent</h2>
@@ -792,37 +688,6 @@ export default function App() {
               )}
             </>
           )}
-          {view === "groups" && (
-            <>
-              <PageHeading
-                eyebrow="YOUR COMPANY LIBRARY"
-                title="Good companies. Great possibilities."
-                description="All your saved company groups, together in one place."
-              />
-              <section className="panel library-panel">
-                <div className="panel-heading">
-                  <h2>
-                    Company groups{" "}
-                    <span className="heading-count">{groups.length}</span>
-                  </h2>
-                  <a href="#builder" className="button">
-                    Build a search <ArrowRight size={16} />
-                  </a>
-                </div>
-                {groupList}
-              </section>
-              {selected.length > 0 && (
-                <div className="library-footer">
-                  <span>
-                    {selected.length} groups ready for your next search
-                  </span>
-                  <a href="#builder" className="button primary">
-                    Continue to search builder <ArrowRight size={17} />
-                  </a>
-                </div>
-              )}
-            </>
-          )}
           {view === "presets" && (
             <>
               <div className="page-heading">
@@ -855,6 +720,7 @@ export default function App() {
               </div>
             </>
           )}
+          {view === "companies-data" && <CompaniesData groups={groups} />}
           {view === "history" && (
             <>
               <PageHeading
@@ -1046,51 +912,6 @@ export default function App() {
           </>
         )}
       </div>
-      {modal?.type === "group" && (
-        <ModalFrame
-          title="Add a company group"
-          description="Save a LinkedIn Jobs link with its original company filter."
-          close={() => setModal(null)}
-        >
-          <form onSubmit={saveGroup} className="dialog-form">
-            <label>
-              Group name
-              <input
-                name="name"
-                placeholder="e.g. My favorite startups"
-                required
-                maxLength={120}
-              />
-            </label>
-            <label>
-              Original LinkedIn Jobs URL
-              <textarea
-                name="url"
-                rows={5}
-                placeholder="https://www.linkedin.com/jobs/search/?f_C=..."
-                required
-              />
-            </label>
-            <p className="muted text-sm">
-              Company IDs are read from the f_C filter. Their order and your
-              original URL are preserved.
-            </p>
-            {formError && (
-              <p className="form-error" role="alert">
-                {formError}
-              </p>
-            )}
-            <div className="dialog-actions">
-              <Button type="button" onClick={() => setModal(null)}>
-                Cancel
-              </Button>
-              <Button className="primary" type="submit">
-                <Plus size={17} /> Save company group
-              </Button>
-            </div>
-          </form>
-        </ModalFrame>
-      )}
       {modal?.type === "inspect" && (
         <ModalFrame
           title="Your generated search"
