@@ -9,3 +9,5 @@ Semantic tokens live in src/styles.css. Primary #2857da; background #f7f8fb; sur
 Interactions: selected groups have checked controls and blue borders; original labels and counts remain visible. Generate is disabled until a group is selected. Copy feedback uses a polite live region. Dialogs use Radix focus management and Escape dismissal. Reduced motion disables transitions. Source IDs, exact query, and generated URL remain inspectable.
 
 Design research: ui-ux-pro-max design-system query `job search productivity dashboard minimal professional blue`, plus UX query `animation accessibility z-index loading`. Adapted the tool's mobile suggestions to the requested desktop website.
+
+User-directed update: restore the prior light UI and use #EF4444 only for action-button fills. Button labels use #0B1220 for readable contrast; text-only actions use a darker red. Navigation, panels, canvas, data, and existing layouts retain their previous styling. Disabled buttons remain visibly subdued.

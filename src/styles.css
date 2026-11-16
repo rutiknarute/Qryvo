@@ -3078,3 +3078,50 @@ main {
 .company-directory a {
   min-height: 68px;
 }
+
+/* Keep the previous light UI; use the requested red for action buttons only. */
+.button,
+.button.primary,
+.button.company-preset-link,
+.button.new-grad-link,
+.button.software-link,
+.button.linkedin-button {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #0b1220;
+  font-weight: 650;
+  box-shadow: 0 2px 4px #ef444414;
+}
+.button:hover:not(:disabled),
+.button.primary:hover:not(:disabled),
+.button.company-preset-link:hover,
+.button.new-grad-link:hover,
+.button.software-link:hover {
+  background: #f56b6b;
+  border-color: #f56b6b;
+  color: #0b1220;
+}
+.button:active:not(:disabled),
+.button.primary:active:not(:disabled),
+.button.new-grad-link:active,
+.button.software-link:active {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #0b1220;
+}
+.button:focus-visible {
+  outline: 3px solid #ef4444;
+  outline-offset: 3px;
+}
+.text-button {
+  color: #b91c1c;
+}
+.text-button:hover:not(:disabled) {
+  color: #991b1b;
+}
+.button.primary.generate-button:disabled {
+  background: #e5e7eb;
+  border-color: #d1d5db;
+  color: #6b7280;
+  box-shadow: none;
+}
