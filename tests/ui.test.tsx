@@ -91,7 +91,7 @@ test("initial state, all-group batch, preset switch, exact URL copy and inspect"
   }) as HTMLButtonElement;
   assert.equal(generate.disabled, true);
   assert.equal(screen.getAllByRole("checkbox").length, 16);
-  assert.equal(screen.getAllByText("Count differs").length, 5);
+  assert.equal(screen.queryByText("Count differs"), null);
   await user.click(screen.getByRole("button", { name: "Select all" }));
   assert.equal(
     screen
@@ -307,4 +307,77 @@ test("the example preset becomes available in an existing browser and the open l
       .length,
     3,
   );
+});
+
+test("vertical company links have accurate names, unchanged company IDs, and open with current filters", async () => {
+  const { examplePreset } = await import("../src/catalogue.ts");
+  render(<App />);
+  const buttons = screen.getAllByRole("link", {
+    name: /^Open .+ on LinkedIn$/,
+  }) as HTMLAnchorElement[];
+  assert.equal(buttons.length, 16);
+  const expectedNames = [
+    "Top 1 (25)",
+    "Top 2 (25)",
+    "Top 3 (50)",
+    "Top 4 (60)",
+    "Top 5 (60)",
+    "Top 6 (60)",
+    "Top 7 (60)",
+    "Top 8-9 (100)",
+    "Top 10-11 (100)",
+    "Forbes (40)",
+    "YC & others (50)",
+    "Ashby (50)",
+    "Greenhouse (50)",
+    "Cloud (50)",
+    "YC (100)",
+    "Play (100)",
+  ];
+  for (const [i, link] of buttons.entries()) {
+    assert.equal(
+      link.getAttribute("aria-label"),
+      `Open ${expectedNames[i]} on LinkedIn`,
+    );
+    const url = new URL(link.href);
+    assert.equal(url.pathname, "/jobs/search-results/");
+    assert.equal(url.searchParams.get("keywords"), examplePreset.query);
+    assert.deepEqual(
+      url.searchParams.get("f_C")!.split(","),
+      seed.groups[i].company_ids,
+    );
+    assert.equal(link.target, "_blank");
+    assert.equal(link.rel, "noopener noreferrer");
+  }
+  await user.click(
+    screen.getByRole("radio", { name: /Software & Development/ }),
+  );
+  await user.selectOptions(screen.getByLabelText("Date posted"), "r604800");
+  const updated = new URL(
+    (
+      screen.getByRole("link", {
+        name: "Open Top 4 (60) on LinkedIn",
+      }) as HTMLAnchorElement
+    ).href,
+  );
+  assert.equal(
+    updated.searchParams.get("keywords"),
+    seed.boolean_presets[1].query,
+  );
+  assert.equal(updated.searchParams.get("f_TPR"), "r604800");
+  assert.equal(updated.searchParams.get("f_C")!.split(",").length, 60);
+  assert.equal(
+    screen.queryByText(/Original group names are kept as saved/),
+    null,
+  );
+  await user.click(screen.getByRole("checkbox", { name: "Select Top 4 (60)" }));
+  await user.click(
+    screen.getByRole("button", { name: /Generate search links/ }),
+  );
+  const generated = (await screen.findByRole("link", {
+    name: "Open LinkedIn",
+  })) as HTMLAnchorElement;
+  assert.equal(generated.href, updated.href);
+  const stored = JSON.parse(localStorage.getItem("searchdesk-config")!);
+  assert.deepEqual(stored.groups, seed.groups);
 });

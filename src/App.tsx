@@ -31,10 +31,12 @@ import {
 } from "@phosphor-icons/react";
 import seedData from "./data/seed.json";
 import {
-  auditIds,
   csv,
   defaults,
   generateSearches,
+  generateUrl,
+  displayGroupName,
+  groupTitle,
   mergeConfig,
   parseGroup,
   validateConfig,
@@ -216,7 +218,9 @@ export default function App() {
   const totalCompanies = new Set(groups.flatMap((g) => g.company_ids)).size;
   const visible = groups.filter(
     (g) =>
-      `${g.id} ${g.name}`.toLowerCase().includes(search.toLowerCase()) &&
+      `${g.id} ${g.name} ${displayGroupName(g)}`
+        .toLowerCase()
+        .includes(search.toLowerCase()) &&
       (groupTab !== "favorites" || favorites.includes(g.id)),
   );
   const allVisibleSelected =
@@ -333,7 +337,7 @@ export default function App() {
           g.company_ids.join(",") === group.company_ids.join(","),
       );
       const warnings = [
-        duplicate ? `Similar to ${duplicate.name}` : "",
+        duplicate ? `Similar to ${displayGroupName(duplicate)}` : "",
         new Set(group.company_ids).size < group.company_ids.length
           ? "contains duplicate company IDs"
           : "",
@@ -442,67 +446,62 @@ export default function App() {
               : "Select all"}
         </button>
       </div>
-      <div className="group-grid">
+      <div className="company-list">
         {visible.map((g) => (
           <article
-            className={`group-card ${selected.includes(g.id) ? "selected" : ""}`}
+            className={`company-row ${selected.includes(g.id) ? "selected" : ""}`}
             key={g.id}
           >
-            <label className="group-main">
-              <div className="group-card-top">
-                <span
-                  className={`group-symbol ${Number(g.id) > 9 ? "special" : ""}`}
-                >
-                  <Buildings size={19} />
-                </span>
-                <input
-                  type="checkbox"
-                  checked={selected.includes(g.id)}
-                  onChange={() => toggle(g.id)}
-                  aria-label={`Select ${g.name}`}
-                />
-              </div>
-              <strong>{g.name}</strong>
-              <span className="group-count">
-                {g.company_ids.length} companies <span className="dot">·</span>{" "}
-                <span className="mono">
-                  {g.id.startsWith("custom-") ? "Custom" : `#${g.id}`}
-                </span>
-              </span>
+            <label className="company-select">
+              <input
+                type="checkbox"
+                checked={selected.includes(g.id)}
+                onChange={() => toggle(g.id)}
+                aria-label={`Select ${displayGroupName(g)}`}
+              />
             </label>
-            <div className="group-card-bottom">
-              {auditIds.has(g.id) ? (
-                <span className="audit-badge">
-                  <WarningCircle size={12} /> Count differs
-                </span>
-              ) : (
-                <span className="group-type">
+            <a
+              className="company-link"
+              href={generateUrl(g, preset, options)}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Open ${displayGroupName(g)} on LinkedIn`}
+            >
+              <span className="company-symbol">
+                <Buildings size={21} />
+              </span>
+              <span className="company-label">
+                <strong>{groupTitle(g)}</strong>
+                <small>
                   {g.id.startsWith("custom-")
-                    ? "Your collection"
-                    : Number(g.id) < 10
-                      ? "Top companies"
-                      : "Curated collection"}
-                </span>
-              )}
-              <div className="group-actions">
-                <button
-                  className={`small-icon ${favorites.includes(g.id) ? "is-favorite" : ""}`}
-                  aria-label={`${favorites.includes(g.id) ? "Unfavorite" : "Favorite"} ${g.name}`}
-                  onClick={() => favorite(g.id)}
-                >
-                  <Star
-                    size={15}
-                    weight={favorites.includes(g.id) ? "fill" : "regular"}
-                  />
-                </button>
-                <button
-                  className="small-icon"
-                  aria-label={`View ${g.name} details`}
-                  onClick={() => openModal({ type: "source", group: g })}
-                >
-                  <Info size={15} />
-                </button>
-              </div>
+                    ? "Custom group"
+                    : `Group #${g.id}`}
+                </small>
+              </span>
+              <span className="company-size">
+                <strong>{g.company_ids.length}</strong>
+                <span>companies</span>
+              </span>
+              <ArrowSquareOut size={18} className="company-open-icon" />
+            </a>
+            <div className="company-tools">
+              <button
+                className={`small-icon ${favorites.includes(g.id) ? "is-favorite" : ""}`}
+                aria-label={`${favorites.includes(g.id) ? "Unfavorite" : "Favorite"} ${displayGroupName(g)}`}
+                onClick={() => favorite(g.id)}
+              >
+                <Star
+                  size={16}
+                  weight={favorites.includes(g.id) ? "fill" : "regular"}
+                />
+              </button>
+              <button
+                className="small-icon"
+                aria-label={`View ${displayGroupName(g)} details`}
+                onClick={() => openModal({ type: "source", group: g })}
+              >
+                <Info size={17} />
+              </button>
             </div>
           </article>
         ))}
@@ -737,7 +736,9 @@ export default function App() {
                       <span className="step-number">1</span>
                       <div>
                         <h2>Choose your companies</h2>
-                        <p>Select one or more saved company groups.</p>
+                        <p>
+                          Open a group, or select several for a batch search.
+                        </p>
                       </div>
                     </div>
                     <span className="neutral-badge">
@@ -745,13 +746,6 @@ export default function App() {
                     </span>
                   </div>
                   {groupList}
-                  <div className="panel-footnote">
-                    <Info size={15} />
-                    <p>
-                      Original group names are kept as saved. Company counts
-                      reflect the actual IDs in each group.
-                    </p>
-                  </div>
                 </section>
                 <aside className="builder-right">
                   <section className="panel preset-panel">
@@ -994,7 +988,7 @@ export default function App() {
                           <Link size={21} />
                         </span>
                         <div className="result-info">
-                          <strong>{r.group.name}</strong>
+                          <strong>{displayGroupName(r.group)}</strong>
                           <span>
                             {r.preset.name} <span className="dot">·</span>{" "}
                             {r.group.company_ids.length} companies{" "}
@@ -1014,7 +1008,7 @@ export default function App() {
                           </button>
                           <Button
                             className="icon-only"
-                            aria-label={`Copy URL for ${r.group.name}`}
+                            aria-label={`Copy URL for ${displayGroupName(r.group)}`}
                             onClick={() => copy(r.url)}
                           >
                             <Copy size={18} />
@@ -1271,7 +1265,6 @@ export default function App() {
                   <p>
                     {groups.reduce((n, g) => n + g.company_ids.length, 0)}{" "}
                     company references · {totalCompanies} unique company IDs.
-                    Five original group labels differ from actual counts.
                   </p>
                   <p className="settings-note">
                     Schema 1.0.0 · Data stays in this browser.
@@ -1431,7 +1424,7 @@ export default function App() {
       )}
       {modal?.type === "source" && (
         <ModalFrame
-          title={modal.group.name}
+          title={displayGroupName(modal.group)}
           description="Original source details and preserved company IDs."
           close={() => setModal(null)}
         >
@@ -1453,12 +1446,6 @@ export default function App() {
               <span>Group ID</span>
             </div>
           </div>
-          {auditIds.has(modal.group.id) && (
-            <p className="warning-box">
-              <WarningCircle size={18} /> The saved label differs from the
-              actual company count. The original name is preserved.
-            </p>
-          )}
           <label className="field-label">
             Company IDs, in source order
             <textarea
@@ -1485,7 +1472,7 @@ export default function App() {
       {modal?.type === "inspect" && (
         <ModalFrame
           title="Your generated search"
-          description={`${modal.result.group.name} · ${modal.result.preset.name}`}
+          description={`${displayGroupName(modal.result.group)} · ${modal.result.preset.name}`}
           close={() => setModal(null)}
         >
           <div className="validated-label">

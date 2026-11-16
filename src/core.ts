@@ -41,6 +41,36 @@ export const defaults: Options = {
   mode: "separate",
 };
 export const auditIds = new Set(["04", "05", "06", "07", "10"]);
+
+// Display names follow actual counts; saved source names and IDs remain untouched.
+const sourceGroupTitles: Record<string, [string, string]> = {
+  "01": ["Top 1 (25)", "Top 1"],
+  "02": ["Top 2 (25-50)", "Top 2"],
+  "03": ["Top 3 (50)", "Top 3"],
+  "04": ["Top 4 (50)", "Top 4"],
+  "05": ["Top 5 (50)", "Top 5"],
+  "06": ["Top 6 (50)", "Top 6"],
+  "07": ["Top 7 (50)", "Top 7"],
+  "08": ["Top 8-9 (100)", "Top 8-9"],
+  "09": ["Top 10-11 (100)", "Top 10-11"],
+  "10": ["Forbes 40 + 1", "Forbes"],
+  "11": ["YC(40) + others", "YC & others"],
+  "12": ["Ashby 50", "Ashby"],
+  "13": ["Greenhouse 50", "Greenhouse"],
+  "14": ["Cloud 50", "Cloud"],
+  "15": ["YC 100", "YC"],
+  "16": ["Play 100", "Play"],
+};
+export function groupTitle(group: Group): string {
+  const source = sourceGroupTitles[group.id];
+  return source?.[0] === group.name ? source[1] : group.name;
+}
+export function displayGroupName(group: Group): string {
+  return sourceGroupTitles[group.id]?.[0] === group.name
+    ? `${groupTitle(group)} (${group.company_ids.length})`
+    : group.name;
+}
+
 export function parseGroup(
   name: string,
   source: string,
@@ -216,7 +246,7 @@ export function csv(results: SearchResult[]): string {
     ...results.map((r) =>
       [
         r.group.id,
-        r.group.name,
+        displayGroupName(r.group),
         r.group.company_ids.length,
         r.preset.id,
         r.preset.name,

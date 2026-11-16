@@ -15,7 +15,7 @@ Open the printed local URL. Production build: `npm run build`. Run the data and 
 
 ## Features
 
-- All 16 original company groups, 980 company references, and 839 distinct IDs.
+- All 16 company groups in a vertical list of full-width LinkedIn buttons, with accurate labels and unchanged counts: 980 company references and 839 distinct IDs. Click any group to open a search with the current query and filters; use checkboxes for batches.
 - Two exact original Boolean presets, plus the later New Grad · Software & AI example as the default preset. Its query joins early-career terms AND software/AI role titles.
 - Separate batch searches by default; optional stable-deduplicated union mode.
 - Date, United States/anywhere location, and recency/relevance filters.
@@ -26,7 +26,7 @@ Open the printed local URL. Production build: `npm run build`. Run the data and 
 
 ## Data and source preservation
 
-The exact source data is in `src/data/seed.json`. To extend the library, use the application or add a new unique ID to this file. Each group needs a name, numeric string `company_ids`, and its unchanged original `source_url`. The ordered IDs must match the original URL's `f_C` parameter. Queries are plain strings: preserve their content exactly. The earlier 50-company reference remains outside the core groups. Later built-in presets are added in `src/catalogue.ts`, so the original seed file stays intact.
+The exact source data is in `src/data/seed.json`. To extend the library, use the application or add a new unique ID to this file. Each group needs a name, numeric string `company_ids`, and its unchanged original `source_url`. The ordered IDs must match the original URL's `f_C` parameter. Built-in display names use the actual ID count; their original saved names remain in the seed and JSON configuration. Queries are plain strings: preserve their content exactly. The earlier 50-company reference remains outside the core groups. Later built-in presets are added in `src/catalogue.ts`, so the original seed file stays intact.
 
 Original built-in entries are protected from conflicting JSON imports. Imports validate completely before merging. They never replace an existing original query with an edited version; use a distinct preset ID for a variant. All custom data is local to the current browser and origin. Use JSON export to move or back up your library.
 
