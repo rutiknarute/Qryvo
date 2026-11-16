@@ -250,9 +250,11 @@ test("company names are keyed by exact saved IDs without inventing names for bla
     ),
   );
   const ids = seed.groups.flatMap((g) => g.company_ids);
-  assert.equal(data.row_count, 980);
-  assert.equal(data.named_row_count, 69);
-  assert.equal(ids.filter((id) => data.names[id]).length, 69);
+  assert.equal(data.row_count, 839);
+  assert.equal(data.named_row_count, 486);
+  assert.equal(data.unresolved_row_count, 353);
+  assert.equal(Object.keys(data.names).length, 486);
+  assert.equal(new Set(ids).size, data.row_count);
   for (const [id, name] of Object.entries(data.names)) {
     assert.ok(ids.includes(id));
     assert.equal(typeof name, "string");
@@ -261,5 +263,6 @@ test("company names are keyed by exact saved IDs without inventing names for bla
   assert.equal(data.names["1497"], "AMD");
   assert.equal(data.names["1441"], "Google");
   assert.equal(data.names["1480"], "Adobe");
-  assert.equal(data.names["98858845"], undefined);
+  assert.equal(data.names["20226"], undefined);
+  assert.ok(data.names["1253"]);
 });
