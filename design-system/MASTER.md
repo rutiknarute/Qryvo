@@ -10,4 +10,4 @@ Interactions: selected groups have checked controls and blue borders; original l
 
 Design research: ui-ux-pro-max design-system query `job search productivity dashboard minimal professional blue`, plus UX query `animation accessibility z-index loading`. Adapted the tool's mobile suggestions to the requested desktop website.
 
-User-directed update: restore the prior light UI and use #EF4444 only for action-button fills. Button labels use #0B1220 for readable contrast; text-only actions use a darker red. Navigation, panels, canvas, data, and existing layouts retain their previous styling. Disabled buttons remain visibly subdued.
+User-directed update: retain the prior light UI, with high-contrast red-family action buttons. New grad and primary actions use #DC2626 with white text. Software uses a distinct burgundy #9F1239 with white text. Both have darker hover/pressed states and visible matching focus rings. All enabled text/background pairs reach WCAG AA 4.5:1 or better. Text-only actions use darker red. Navigation, panels, canvas, data, and layout retain their previous styling; disabled buttons remain subdued.

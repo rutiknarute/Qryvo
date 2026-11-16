@@ -3079,39 +3079,62 @@ main {
   min-height: 68px;
 }
 
-/* Keep the previous light UI; use the requested red for action buttons only. */
+/* Readable red-family actions; query labels also distinguish their purpose. */
+:root {
+  --button-red: #dc2626;
+  --button-red-hover: #b91c1c;
+  --button-red-active: #991b1b;
+  --button-software: #9f1239;
+  --button-software-hover: #881337;
+  --button-software-active: #701a35;
+}
 .button,
 .button.primary,
 .button.company-preset-link,
 .button.new-grad-link,
-.button.software-link,
 .button.linkedin-button {
-  background: #ef4444;
-  border-color: #ef4444;
-  color: #0b1220;
+  background: var(--button-red);
+  border-color: var(--button-red);
+  color: #ffffff;
   font-weight: 650;
-  box-shadow: 0 2px 4px #ef444414;
+  box-shadow: 0 2px 4px #991b1b14;
 }
 .button:hover:not(:disabled),
 .button.primary:hover:not(:disabled),
 .button.company-preset-link:hover,
-.button.new-grad-link:hover,
-.button.software-link:hover {
-  background: #f56b6b;
-  border-color: #f56b6b;
-  color: #0b1220;
+.button.new-grad-link:hover {
+  background: var(--button-red-hover);
+  border-color: var(--button-red-hover);
+  color: #ffffff;
 }
 .button:active:not(:disabled),
 .button.primary:active:not(:disabled),
-.button.new-grad-link:active,
+.button.new-grad-link:active {
+  background: var(--button-red-active);
+  border-color: var(--button-red-active);
+  color: #ffffff;
+}
+.button.software-link {
+  background: var(--button-software);
+  border-color: var(--button-software);
+  color: #ffffff;
+}
+.button.software-link:hover {
+  background: var(--button-software-hover);
+  border-color: var(--button-software-hover);
+  color: #ffffff;
+}
 .button.software-link:active {
-  background: #ef4444;
-  border-color: #ef4444;
-  color: #0b1220;
+  background: var(--button-software-active);
+  border-color: var(--button-software-active);
+  color: #ffffff;
 }
 .button:focus-visible {
-  outline: 3px solid #ef4444;
+  outline: 3px solid var(--button-red);
   outline-offset: 3px;
+}
+.button.software-link:focus-visible {
+  outline-color: var(--button-software);
 }
 .text-button {
   color: #b91c1c;
