@@ -18,7 +18,6 @@ import {
   Plus,
   Sparkle,
   SquaresFour,
-  Star,
   UploadSimple,
   WarningCircle,
   X,
@@ -34,7 +33,7 @@ import {
   parseGroup,
   validateConfig,
 } from "./core";
-import type { Config, Group, Options, SearchResult } from "./core";
+import type { Config, Options, SearchResult } from "./core";
 
 import { catalogue, mergeCatalogue, presetLabel } from "./catalogue";
 
@@ -51,10 +50,7 @@ const geoLabels: Record<string, string> = {
 };
 type View = "builder" | "groups" | "presets" | "history" | "settings";
 type Modal =
-  | { type: "group" }
-  | { type: "source"; group: Group }
-  | { type: "inspect"; result: SearchResult }
-  | null;
+  { type: "group" } | { type: "inspect"; result: SearchResult } | null;
 type HistoryItem = {
   id: string;
   created: string;
@@ -164,11 +160,6 @@ export default function App() {
   const [presetId, setPresetId] = useState("new-grad");
   const [options, setOptions] = useState<Options>({ ...defaults });
   const [search, setSearch] = useState("");
-  const [groupTab, setGroupTab] = useState("all");
-  const [favorites, setFavorites] = useState<string[]>(() => {
-    const v = getStored<unknown>("searchdesk-favorites", []);
-    return Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
-  });
   const [history, setHistory] = useState<HistoryItem[]>(() => {
     const v = getStored<unknown>("searchdesk-history", []);
     return Array.isArray(v)
@@ -205,12 +196,10 @@ export default function App() {
   const preset = presets.find((p) => p.id === presetId) || presets[0];
   const chosen = groups.filter((g) => selected.includes(g.id));
   const totalCompanies = new Set(groups.flatMap((g) => g.company_ids)).size;
-  const visible = groups.filter(
-    (g) =>
-      `${g.id} ${g.name} ${displayGroupName(g)}`
-        .toLowerCase()
-        .includes(search.toLowerCase()) &&
-      (groupTab !== "favorites" || favorites.includes(g.id)),
+  const visible = groups.filter((g) =>
+    `${g.id} ${g.name} ${displayGroupName(g)}`
+      .toLowerCase()
+      .includes(search.toLowerCase()),
   );
   const allVisibleSelected =
     visible.length > 0 && visible.every((g) => selected.includes(g.id));
@@ -219,7 +208,6 @@ export default function App() {
     const fn = () => {
       setView(getView());
       setSearch("");
-      setGroupTab("all");
       requestAnimationFrame(() => mainRef.current?.focus());
     };
     window.addEventListener("hashchange", fn);
@@ -228,12 +216,11 @@ export default function App() {
   useEffect(() => {
     try {
       localStorage.setItem("searchdesk-config", JSON.stringify(config));
-      localStorage.setItem("searchdesk-favorites", JSON.stringify(favorites));
       localStorage.setItem("searchdesk-history", JSON.stringify(history));
     } catch {
       // The search still works when browser storage is unavailable.
     }
-  }, [config, favorites, history]);
+  }, [config, history]);
   useEffect(() => {
     if (toast) {
       const t = setTimeout(() => setToast(""), 4000);
@@ -246,10 +233,6 @@ export default function App() {
   };
   const toggle = (id: string) =>
     setSelected((v) =>
-      v.includes(id) ? v.filter((x) => x !== id) : [...v, id],
-    );
-  const favorite = (id: string) =>
-    setFavorites((v) =>
       v.includes(id) ? v.filter((x) => x !== id) : [...v, id],
     );
   const selectVisible = () =>
@@ -379,22 +362,9 @@ export default function App() {
         </Button>
       </div>
       <div className="group-tabs">
-        <div className="segmented" aria-label="Group filters">
-          <button
-            aria-pressed={groupTab === "all"}
-            className={groupTab === "all" ? "active" : ""}
-            onClick={() => setGroupTab("all")}
-          >
-            All groups <span>{groups.length}</span>
-          </button>
-          <button
-            aria-pressed={groupTab === "favorites"}
-            className={groupTab === "favorites" ? "active" : ""}
-            onClick={() => setGroupTab("favorites")}
-          >
-            <Star size={14} /> Favorites <span>{favorites.length}</span>
-          </button>
-        </div>
+        <span className="group-list-label">
+          {visible.length} company groups
+        </span>
         <button
           className="text-button"
           onClick={selectVisible}
@@ -402,7 +372,7 @@ export default function App() {
         >
           {allVisibleSelected
             ? "Deselect shown"
-            : search || groupTab === "favorites"
+            : search
               ? "Select shown"
               : "Select all"}
         </button>
@@ -421,48 +391,25 @@ export default function App() {
                 aria-label={`Select ${displayGroupName(g)}`}
               />
             </label>
-            <a
-              className="company-link"
-              href={generateUrl(g, preset, options)}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Open ${displayGroupName(g)} on LinkedIn`}
+            <strong
+              className="company-name"
+              title={`${groupTitle(g)} (${g.company_ids.length})`}
             >
-              <span className="company-symbol">
-                <Buildings size={21} />
-              </span>
-              <span className="company-label">
-                <strong>{groupTitle(g)}</strong>
-                <small>
-                  {g.id.startsWith("custom-")
-                    ? "Custom group"
-                    : `Group #${g.id}`}
-                </small>
-              </span>
-              <span className="company-size">
-                <strong>{g.company_ids.length}</strong>
-                <span>companies</span>
-              </span>
-              <ArrowSquareOut size={18} className="company-open-icon" />
-            </a>
-            <div className="company-tools">
-              <button
-                className={`small-icon ${favorites.includes(g.id) ? "is-favorite" : ""}`}
-                aria-label={`${favorites.includes(g.id) ? "Unfavorite" : "Favorite"} ${displayGroupName(g)}`}
-                onClick={() => favorite(g.id)}
-              >
-                <Star
-                  size={16}
-                  weight={favorites.includes(g.id) ? "fill" : "regular"}
-                />
-              </button>
-              <button
-                className="small-icon"
-                aria-label={`View ${displayGroupName(g)} details`}
-                onClick={() => openModal({ type: "source", group: g })}
-              >
-                <Info size={17} />
-              </button>
+              {groupTitle(g)} <span>({g.company_ids.length})</span>
+            </strong>
+            <div className="company-search-actions">
+              {presets.map((p) => (
+                <a
+                  className={`button company-preset-link ${p.id === "new-grad" ? "new-grad-link" : "software-link"}`}
+                  key={p.id}
+                  href={generateUrl(g, p, options)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Open ${displayGroupName(g)} with ${p.id === "new-grad" ? "New grad" : "Software"} on LinkedIn`}
+                >
+                  {p.id === "new-grad" ? "New grad" : "Software"}
+                </a>
+              ))}
             </div>
           </article>
         ))}
@@ -470,20 +417,11 @@ export default function App() {
       {!visible.length && (
         <div className="empty-state compact">
           <MagnifyingGlass size={28} />
-          <h3>
-            {groupTab === "favorites"
-              ? "Your favorites, one click away"
-              : "No matching company groups"}
-          </h3>
-          <p>
-            {groupTab === "favorites"
-              ? "Tap the star on a company group to save it here."
-              : "Try another name or group ID."}
-          </p>
+          <h3>No matching company groups</h3>
+          <p>Try another name or group ID.</p>
           <Button
             onClick={() => {
               setSearch("");
-              setGroupTab("all");
             }}
           >
             Show all groups
@@ -609,11 +547,7 @@ export default function App() {
               <div className="section-intro">
                 <div>
                   <h1 className="builder-title">Build your next search</h1>
-                  <p>A few choices. A more focused path forward.</p>
                 </div>
-                <span className="local-pill">
-                  <CheckCircle size={15} /> Private & browser-based
-                </span>
               </div>
               <div className="builder-grid">
                 <section className="panel group-panel">
@@ -623,7 +557,8 @@ export default function App() {
                       <div>
                         <h2>Choose your companies</h2>
                         <p>
-                          Open a group, or select several for a batch search.
+                          Open New grad or Software, or select groups for a
+                          batch search.
                         </p>
                       </div>
                     </div>
@@ -1154,53 +1089,6 @@ export default function App() {
               </Button>
             </div>
           </form>
-        </ModalFrame>
-      )}
-      {modal?.type === "source" && (
-        <ModalFrame
-          title={displayGroupName(modal.group)}
-          description="Original source details and preserved company IDs."
-          close={() => setModal(null)}
-        >
-          <div className="detail-stats">
-            <div>
-              <strong>{modal.group.company_ids.length}</strong>
-              <span>Company IDs</span>
-            </div>
-            <div>
-              <strong>{new Set(modal.group.company_ids).size}</strong>
-              <span>Unique IDs</span>
-            </div>
-            <div>
-              <strong>
-                {modal.group.id.startsWith("custom-")
-                  ? "Custom"
-                  : `#${modal.group.id}`}
-              </strong>
-              <span>Group ID</span>
-            </div>
-          </div>
-          <label className="field-label">
-            Company IDs, in source order
-            <textarea
-              readOnly
-              rows={5}
-              value={modal.group.company_ids.join(",")}
-            />
-          </label>
-          <div className="dialog-actions">
-            <Button onClick={() => copy(modal.group.source_url)}>
-              <Copy size={16} /> Copy original URL
-            </Button>
-            <a
-              className="button primary"
-              href={modal.group.source_url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Open original <ArrowSquareOut size={16} />
-            </a>
-          </div>
         </ModalFrame>
       )}
       {modal?.type === "inspect" && (

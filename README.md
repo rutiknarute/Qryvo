@@ -15,13 +15,13 @@ Open the printed local URL. Production build: `npm run build`. Run the data and 
 
 ## Features
 
-- All 16 company groups in a vertical list of full-width LinkedIn buttons, with accurate labels and unchanged counts: 980 company references and 839 distinct IDs. Click any group to open a search with the current query and filters; use checkboxes for batches.
+- All 16 company groups in a vertical list of full-width LinkedIn buttons, with accurate labels and unchanged counts: 980 company references and 839 distinct IDs. Each row shows its name and company count in parentheses, followed by New grad and Software buttons for the two exact queries. Both buttons use the current filters; use checkboxes for batches.
 - Only the two exact supplied Boolean queries: New Graduate (default) and Software & Development. Retired or custom queries are removed from saved configuration on load; saved company groups are retained.
 - Separate batch searches by default; optional stable-deduplicated union mode.
 - Date, United States/anywhere location, and recency/relevance filters.
 - Per-search open, copy, full URL inspection, bulk copy, CSV export, and full group/preset matrix export.
 - Add groups by parsing pasted HTTPS LinkedIn Jobs URLs.
-- Favorites, 20 recent searches, local persistence, and non-destructive versioned JSON import/export.
+- Local persistence, saved searches, and non-destructive versioned JSON import/export.
 - Responsive navigation, native checkboxes/radios/selects, Radix dialogs, focus restoration, and reduced-motion support.
 
 ## Data and source preservation
