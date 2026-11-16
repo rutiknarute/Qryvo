@@ -3079,39 +3079,39 @@ main {
   min-height: 68px;
 }
 
-/* Readable red-family actions; query labels also distinguish their purpose. */
+/* Readable blue-family actions; query labels also distinguish their purpose. */
 :root {
-  --button-red: #dc2626;
-  --button-red-hover: #b91c1c;
-  --button-red-active: #991b1b;
-  --button-software: #9f1239;
-  --button-software-hover: #881337;
-  --button-software-active: #701a35;
+  --button-primary: #2857da;
+  --button-primary-hover: #2149ba;
+  --button-primary-active: #193b9c;
+  --button-software: #1e40af;
+  --button-software-hover: #1e3a8a;
+  --button-software-active: #172d69;
 }
 .button,
 .button.primary,
 .button.company-preset-link,
 .button.new-grad-link,
 .button.linkedin-button {
-  background: var(--button-red);
-  border-color: var(--button-red);
+  background: var(--button-primary);
+  border-color: var(--button-primary);
   color: #ffffff;
   font-weight: 650;
-  box-shadow: 0 2px 4px #991b1b14;
+  box-shadow: 0 2px 4px #193b9c14;
 }
 .button:hover:not(:disabled),
 .button.primary:hover:not(:disabled),
 .button.company-preset-link:hover,
 .button.new-grad-link:hover {
-  background: var(--button-red-hover);
-  border-color: var(--button-red-hover);
+  background: var(--button-primary-hover);
+  border-color: var(--button-primary-hover);
   color: #ffffff;
 }
 .button:active:not(:disabled),
 .button.primary:active:not(:disabled),
 .button.new-grad-link:active {
-  background: var(--button-red-active);
-  border-color: var(--button-red-active);
+  background: var(--button-primary-active);
+  border-color: var(--button-primary-active);
   color: #ffffff;
 }
 .button.software-link {
@@ -3130,17 +3130,17 @@ main {
   color: #ffffff;
 }
 .button:focus-visible {
-  outline: 3px solid var(--button-red);
+  outline: 3px solid var(--button-primary);
   outline-offset: 3px;
 }
 .button.software-link:focus-visible {
   outline-color: var(--button-software);
 }
 .text-button {
-  color: #b91c1c;
+  color: #2149ba;
 }
 .text-button:hover:not(:disabled) {
-  color: #991b1b;
+  color: #193b9c;
 }
 .button.primary.generate-button:disabled {
   background: #e5e7eb;
