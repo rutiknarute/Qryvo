@@ -3,6 +3,12 @@ import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
 import type { Config } from "../src/core.ts";
 import { readFileSync } from "node:fs";
+const companyNames = JSON.parse(
+  readFileSync(
+    new URL("../src/data/company-names.json", import.meta.url),
+    "utf8",
+  ),
+);
 const seed = JSON.parse(
   readFileSync(new URL("../src/data/seed.json", import.meta.url), "utf8"),
 ) as Config;
@@ -91,6 +97,11 @@ test("initial state, all-group batch, preset switch, exact URL copy and inspect"
   }) as HTMLButtonElement;
   assert.equal(generate.disabled, true);
   assert.equal(screen.getAllByRole("checkbox").length, 16);
+  assert.equal(screen.queryByText("A little focus goes a long way."), null);
+  assert.equal(
+    screen.queryByText("Opens a world of possibilities on LinkedIn."),
+    null,
+  );
   assert.equal(screen.queryByText("Count differs"), null);
   await user.click(screen.getByRole("button", { name: "Select all" }));
   assert.equal(
@@ -154,6 +165,8 @@ test("Companies Data opens each saved URL membership without changing IDs or cou
   assert.equal(screen.queryByText("16 company groups"), null);
   await user.click(screen.getByRole("link", { name: "Companies Data" }));
   await screen.findByRole("heading", { name: "Companies Data" });
+  assert.equal(screen.queryByText(/Click a group to see/), null);
+  assert.equal(screen.queryByText(/Company names weren’t included/), null);
   for (const [i, name] of [
     "Top 1 (25)",
     "Top 4 (60)",
@@ -169,6 +182,14 @@ test("Companies Data opens each saved URL membership without changing IDs or cou
       name: /Company ID/,
     }) as HTMLAnchorElement[];
     assert.equal(links.length, group.company_ids.length);
+    for (const [index, id] of group.company_ids.entries()) {
+      assert.ok(
+        links[index].textContent?.includes(
+          companyNames.names[id] || "Name unavailable",
+        ),
+      );
+      assert.ok(links[index].textContent?.includes(`ID: ${id}`));
+    }
     assert.deepEqual(
       links.map((x) => new URL(x.href).pathname),
       group.company_ids.map((id) => `/company/${id}/`),
@@ -197,6 +218,11 @@ test("Companies Data opens each saved URL membership without changing IDs or cou
 test("the compact company list retains both direct query actions and batch selection", async () => {
   render(<App />);
   assert.equal(screen.getAllByRole("checkbox").length, 16);
+  assert.equal(screen.queryByText("A little focus goes a long way."), null);
+  assert.equal(
+    screen.queryByText("Opens a world of possibilities on LinkedIn."),
+    null,
+  );
   assert.equal(
     screen.queryByRole("textbox", { name: "Search company groups" }),
     null,

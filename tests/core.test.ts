@@ -221,3 +221,25 @@ test("the catalogue exposes only the two original exact queries and retires save
     /conflicts/,
   );
 });
+
+test("company names are keyed by exact saved IDs without inventing names for blank CSV fields", () => {
+  const data = JSON.parse(
+    readFileSync(
+      new URL("../src/data/company-names.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  const ids = seed.groups.flatMap((g) => g.company_ids);
+  assert.equal(data.row_count, 980);
+  assert.equal(data.named_row_count, 69);
+  assert.equal(ids.filter((id) => data.names[id]).length, 69);
+  for (const [id, name] of Object.entries(data.names)) {
+    assert.ok(ids.includes(id));
+    assert.equal(typeof name, "string");
+    assert.ok((name as string).trim());
+  }
+  assert.equal(data.names["1497"], "AMD");
+  assert.equal(data.names["1441"], "Google");
+  assert.equal(data.names["1480"], "Adobe");
+  assert.equal(data.names["98858845"], undefined);
+});

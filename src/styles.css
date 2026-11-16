@@ -3058,3 +3058,23 @@ main {
   outline: 3px solid #779be6;
   outline-offset: 3px;
 }
+
+/* Company identity and exact LinkedIn ID stay together in each entry. */
+.company-directory .company-record {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.company-directory .company-record strong {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+.company-record-id {
+  color: var(--color-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.company-directory a {
+  min-height: 68px;
+}

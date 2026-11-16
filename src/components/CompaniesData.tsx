@@ -2,6 +2,9 @@ import { useState } from "react";
 import { ArrowSquareOut, Buildings, CaretDown } from "@phosphor-icons/react";
 import { displayGroupName } from "../core";
 import type { Group } from "../core";
+import companyNames from "../data/company-names.json";
+
+const names: Record<string, string> = companyNames.names;
 
 export default function CompaniesData({ groups }: { groups: Group[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -9,12 +12,7 @@ export default function CompaniesData({ groups }: { groups: Group[] }) {
     <>
       <div className="page-heading">
         <h1>Companies Data</h1>
-        <p>Click a group to see the companies attached to its saved URL.</p>
       </div>
-      <p className="company-data-note">
-        Company names weren’t included in the supplied files. Each company ID
-        links to its LinkedIn page.
-      </p>
       <div className="company-data-list">
         {groups.map((group) => {
           const expanded = openId === group.id;
@@ -55,9 +53,11 @@ export default function CompaniesData({ groups }: { groups: Group[] }) {
                           href={`https://www.linkedin.com/company/${id}/`}
                           target="_blank"
                           rel="noopener noreferrer"
+                          aria-label={`${names[id] ? names[id] + ", " : ""}Company ID ${id}`}
                         >
-                          <span>
-                            Company ID <strong>{id}</strong>
+                          <span className="company-record">
+                            <strong>{names[id] || "Name unavailable"}</strong>
+                            <span className="company-record-id">ID: {id}</span>
                           </span>
                           <ArrowSquareOut size={15} />
                         </a>

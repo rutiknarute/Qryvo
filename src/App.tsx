@@ -490,7 +490,6 @@ export default function App() {
                       <span className="step-number">3</span>
                       <div>
                         <h2>Fine-tune the details</h2>
-                        <p>A little focus goes a long way.</p>
                       </div>
                     </div>
                     <div className="filter-grid">
@@ -590,7 +589,6 @@ export default function App() {
                         <Sparkle size={19} /> Generate search links{" "}
                         <ArrowRight size={18} />
                       </Button>
-                      <small>Opens a world of possibilities on LinkedIn.</small>
                     </div>
                   </section>
                 </aside>
