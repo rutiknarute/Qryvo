@@ -7,21 +7,15 @@ import {
   ArrowsClockwise,
   BracketsCurly,
   Buildings,
-  CaretRight,
-  Check,
   CheckCircle,
   ClockCounterClockwise,
-  Code,
   Copy,
   DownloadSimple,
   FolderSimple,
-  GraduationCap,
   Info,
   Link,
   MagnifyingGlass,
   Plus,
-  Question,
-  SlidersHorizontal,
   Sparkle,
   SquaresFour,
   Star,
@@ -37,13 +31,12 @@ import {
   generateUrl,
   displayGroupName,
   groupTitle,
-  mergeConfig,
   parseGroup,
   validateConfig,
 } from "./core";
-import type { Config, Group, Options, Preset, SearchResult } from "./core";
+import type { Config, Group, Options, SearchResult } from "./core";
 
-import { catalogue, examplePreset } from "./catalogue";
+import { catalogue, mergeCatalogue, presetLabel } from "./catalogue";
 
 const seed = catalogue;
 const dateLabels: Record<string, string> = {
@@ -58,8 +51,7 @@ const geoLabels: Record<string, string> = {
 };
 type View = "builder" | "groups" | "presets" | "history" | "settings";
 type Modal =
-  | { type: "group" | "preset" | "help" }
-  | { type: "query"; preset: Preset }
+  | { type: "group" }
   | { type: "source"; group: Group }
   | { type: "inspect"; result: SearchResult }
   | null;
@@ -80,7 +72,7 @@ function getStored<T>(key: string, fallback: T): T {
 function initialConfig() {
   try {
     const stored = getStored<unknown>("searchdesk-config", null);
-    return stored ? mergeConfig(seed, validateConfig(stored)) : seed;
+    return stored ? mergeCatalogue(validateConfig(stored)) : seed;
   } catch {
     return seed;
   }
@@ -169,7 +161,7 @@ export default function App() {
   const [config, setConfig] = useState<Config>(initialConfig);
   const [view, setView] = useState<View>(getView);
   const [selected, setSelected] = useState<string[]>([]);
-  const [presetId, setPresetId] = useState(examplePreset.id);
+  const [presetId, setPresetId] = useState("new-grad");
   const [options, setOptions] = useState<Options>({ ...defaults });
   const [search, setSearch] = useState("");
   const [groupTab, setGroupTab] = useState("all");
@@ -190,6 +182,7 @@ export default function App() {
               Array.isArray(x.groupIds) &&
               x.groupIds.every((g: unknown) => typeof g === "string") &&
               typeof x.presetId === "string" &&
+              seed.boolean_presets.some((p) => p.id === x.presetId) &&
               x.options &&
               ["separate", "merged"].includes(x.options.mode) &&
               ["date", "geoId", "sortBy"].every(
@@ -202,17 +195,13 @@ export default function App() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [modal, setModal] = useState<Modal>(null);
   const [toast, setToast] = useState("");
-  const [saved, setSaved] = useState(true);
   const [formError, setFormError] = useState("");
   const [importError, setImportError] = useState("");
   const resultsRef = useRef<HTMLElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
   const groups = config.groups;
-  const presets = [
-    ...config.boolean_presets.filter((p) => p.id === examplePreset.id),
-    ...config.boolean_presets.filter((p) => p.id !== examplePreset.id),
-  ];
+  const presets = seed.boolean_presets;
   const preset = presets.find((p) => p.id === presetId) || presets[0];
   const chosen = groups.filter((g) => selected.includes(g.id));
   const totalCompanies = new Set(groups.flatMap((g) => g.company_ids)).size;
@@ -226,13 +215,6 @@ export default function App() {
   const allVisibleSelected =
     visible.length > 0 && visible.every((g) => selected.includes(g.id));
   const uniqueSelected = new Set(chosen.flatMap((g) => g.company_ids)).size;
-  const title = {
-    builder: "Search builder",
-    groups: "Company groups",
-    presets: "Boolean presets",
-    history: "Recent searches",
-    settings: "Data & settings",
-  }[view];
   useEffect(() => {
     const fn = () => {
       setView(getView());
@@ -248,9 +230,8 @@ export default function App() {
       localStorage.setItem("searchdesk-config", JSON.stringify(config));
       localStorage.setItem("searchdesk-favorites", JSON.stringify(favorites));
       localStorage.setItem("searchdesk-history", JSON.stringify(history));
-      setSaved(true);
     } catch {
-      setSaved(false);
+      // The search still works when browser storage is unavailable.
     }
   }, [config, favorites, history]);
   useEffect(() => {
@@ -353,26 +334,6 @@ export default function App() {
       setFormError((err as Error).message);
     }
   }
-  function savePreset(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const name = String(f.get("name")).trim();
-    const query = String(f.get("query"));
-    if (!name || !query.trim()) {
-      setFormError("Enter a preset name and a Boolean query.");
-      return;
-    }
-    const p = {
-      id: `custom-${crypto.randomUUID()}`,
-      name,
-      query,
-      user_created: true,
-    };
-    setConfig((v) => ({ ...v, boolean_presets: [...v.boolean_presets, p] }));
-    setPresetId(p.id);
-    setToast("Boolean preset saved");
-    setModal(null);
-  }
   async function importFile(file?: File) {
     if (!file) return;
     setImportError("");
@@ -380,7 +341,7 @@ export default function App() {
       if (file.size > 2_000_000)
         throw new Error("Choose a JSON configuration smaller than 2 MB.");
       const incoming = validateConfig(JSON.parse(await file.text()));
-      const merged = mergeConfig(config, incoming);
+      const merged = mergeCatalogue(incoming, config);
       setConfig(merged);
       setToast(
         `Imported ${merged.groups.length - config.groups.length} groups and ${merged.boolean_presets.length - config.boolean_presets.length} presets`,
@@ -560,7 +521,6 @@ export default function App() {
             searchdesk<span className="brand-dot">.</span>
           </span>
         </a>
-        <p className="nav-label">WORKSPACE</p>
         <nav aria-label="Main navigation">
           {(
             [
@@ -591,82 +551,8 @@ export default function App() {
             </a>
           ))}
         </nav>
-        <div className="sidebar-bottom">
-          <div className="sidebar-tip">
-            <span className="tip-symbol">
-              <Sparkle size={19} />
-            </span>
-            <strong>A little more focus.</strong>
-            <p>
-              The right companies.
-              <br />
-              The right search.
-              <br />
-              Your next opportunity.
-            </p>
-            <button
-              className="text-button"
-              onClick={() => openModal({ type: "help" })}
-            >
-              See how it works <ArrowRight size={15} />
-            </button>
-            <div className="tip-decoration" aria-hidden="true">
-              [<span>/</span>]
-            </div>
-          </div>
-          <a
-            className={`nav-item ${view === "settings" ? "active" : ""}`}
-            href="#settings"
-            aria-current={view === "settings" ? "page" : undefined}
-          >
-            <SlidersHorizontal size={20} />
-            <span>Data & settings</span>
-          </a>
-          <button
-            className="nav-item"
-            onClick={() => openModal({ type: "help" })}
-          >
-            <Question size={20} />
-            <span>Help & getting started</span>
-          </button>
-          <div className="sidebar-footer">
-            <span className="avatar">Y</span>
-            <div>
-              <strong>Your personal space</strong>
-              <span>Built for your next chapter</span>
-            </div>
-          </div>
-        </div>
       </aside>
       <div className="main-shell">
-        <header className="topbar">
-          <div className="breadcrumbs">
-            <span>Workspace</span>
-            <CaretRight size={13} />
-            <strong>{title}</strong>
-          </div>
-          <div className="topbar-right">
-            <span className={`save-state ${saved ? "" : "unsaved"}`}>
-              <span />
-              {saved ? "Saved on this browser" : "Browser storage unavailable"}
-            </span>
-            <button
-              className="icon-button"
-              aria-label="Open help"
-              onClick={() => openModal({ type: "help" })}
-            >
-              <Question size={21} />
-            </button>
-            <a
-              className="icon-button mobile-settings"
-              href="#settings"
-              aria-label="Data and settings"
-            >
-              <SlidersHorizontal size={20} />
-            </a>
-            <span className="avatar">Y</span>
-          </div>
-        </header>
         <main id="main-content" tabIndex={-1} ref={mainRef}>
           {view === "builder" && (
             <>
@@ -749,13 +635,7 @@ export default function App() {
                 </section>
                 <aside className="builder-right">
                   <section className="panel preset-panel">
-                    <div className="step-title">
-                      <span className="step-number">2</span>
-                      <div>
-                        <h2>Set your search intent</h2>
-                        <p>Choose a Boolean preset.</p>
-                      </div>
-                    </div>
+                    <h2 className="intent-heading">Set your search intent</h2>
                     <fieldset className="preset-options">
                       <legend className="sr-only">Boolean preset</legend>
                       {presets.map((p) => (
@@ -769,64 +649,10 @@ export default function App() {
                             checked={preset.id === p.id}
                             onChange={() => setPresetId(p.id)}
                           />
-                          <span className="preset-option-icon">
-                            {p.id === "new-grad" ||
-                            p.id === examplePreset.id ? (
-                              <GraduationCap size={21} />
-                            ) : (
-                              <Code size={21} />
-                            )}
-                          </span>
-                          <span>
-                            <strong>
-                              {p.id === "new-grad"
-                                ? "New Graduate"
-                                : p.id === "software"
-                                  ? "Software & Development"
-                                  : p.name}
-                            </strong>
-                            <small>
-                              {p.id === examplePreset.id
-                                ? "Early-career AND software/AI roles."
-                                : p.id === "new-grad"
-                                  ? "Early career. Fresh possibilities."
-                                  : p.id === "software"
-                                    ? "Build, develop, and create."
-                                    : "Your custom Boolean search"}
-                            </small>
-                          </span>
+                          <strong>{presetLabel(p)}</strong>
                         </label>
                       ))}
                     </fieldset>
-                    <div className="query-preview">
-                      <div>
-                        <span>
-                          <Code size={14} /> QUERY PREVIEW
-                        </span>
-                        <button
-                          className="text-button"
-                          onClick={() => openModal({ type: "query", preset })}
-                        >
-                          View full query <ArrowSquareOut size={13} />
-                        </button>
-                      </div>
-                      <div className="query-snippet">
-                        <QueryText query={preset.query} />
-                      </div>
-                      <footer>
-                        <span className="mini-dot" />
-                        {preset.query.length} characters <span>·</span>{" "}
-                        {seed.boolean_presets.some((p) => p.id === preset.id)
-                          ? "Exact original"
-                          : "Custom preset"}
-                      </footer>
-                    </div>
-                    <button
-                      className="add-preset"
-                      onClick={() => openModal({ type: "preset" })}
-                    >
-                      <Plus size={16} /> Add custom preset
-                    </button>
                   </section>
                   <section className="panel filters-panel">
                     <div className="step-title">
@@ -990,7 +816,8 @@ export default function App() {
                         <div className="result-info">
                           <strong>{displayGroupName(r.group)}</strong>
                           <span>
-                            {r.preset.name} <span className="dot">·</span>{" "}
+                            {presetLabel(r.preset)}{" "}
+                            <span className="dot">·</span>{" "}
                             {r.group.company_ids.length} companies{" "}
                             <span className="dot">·</span>{" "}
                             {dateLabels[r.options.date]}
@@ -1063,34 +890,14 @@ export default function App() {
           )}
           {view === "presets" && (
             <>
-              <PageHeading
-                eyebrow="YOUR SEARCH LANGUAGE"
-                title="A little precision. A lot of possibility."
-                description="Exact Boolean queries that bring your search into focus."
-              />
-              <div className="page-actions">
-                <Button onClick={() => openModal({ type: "preset" })}>
-                  <Plus size={17} /> Add custom preset
-                </Button>
+              <div className="page-heading">
+                <h1>Boolean presets</h1>
               </div>
               <div className="preset-library">
                 {presets.map((p) => (
                   <article className="panel preset-library-card" key={p.id}>
                     <div className="panel-heading">
-                      <div className="step-title">
-                        <span className="stat-icon violet">
-                          <BracketsCurly size={22} />
-                        </span>
-                        <div>
-                          <h2>{p.name}</h2>
-                          <p>
-                            {p.query.length} characters ·{" "}
-                            {seed.boolean_presets.some((x) => x.id === p.id)
-                              ? "Exact original preset"
-                              : "Custom preset"}
-                          </p>
-                        </div>
-                      </div>
+                      <h2>{presetLabel(p)}</h2>
                       <Button onClick={() => copy(p.query)}>
                         <Copy size={16} /> Copy query
                       </Button>
@@ -1107,12 +914,6 @@ export default function App() {
                       >
                         Use this preset <ArrowRight size={16} />
                       </Button>
-                      <button
-                        className="text-button"
-                        onClick={() => openModal({ type: "preset" })}
-                      >
-                        Create a new variant <Plus size={15} />
-                      </button>
                     </footer>
                   </article>
                 ))}
@@ -1136,7 +937,7 @@ export default function App() {
                           <ClockCounterClockwise size={23} />
                         </span>
                         <div>
-                          <h2>{p?.name || "Saved preset"}</h2>
+                          <h2>{p ? presetLabel(p) : "Saved preset"}</h2>
                           <p>
                             {h.groupIds.length} groups ·{" "}
                             {dateLabels[h.options.date] || "Custom date"} ·{" "}
@@ -1192,7 +993,7 @@ export default function App() {
             <>
               <PageHeading
                 eyebrow="MAKE IT YOURS"
-                title="Your workspace. Your data."
+                title="Your search library"
                 description="Keep your search library portable and your original sources close."
               />
               <div className="settings-grid">
@@ -1355,73 +1156,6 @@ export default function App() {
           </form>
         </ModalFrame>
       )}
-      {modal?.type === "preset" && (
-        <ModalFrame
-          title="Create a Boolean preset"
-          description="Make a new search or a separately named variant of an original."
-          close={() => setModal(null)}
-        >
-          <form onSubmit={savePreset} className="dialog-form">
-            <label>
-              Preset name
-              <input
-                name="name"
-                required
-                maxLength={120}
-                placeholder="e.g. Frontend opportunities"
-              />
-            </label>
-            <label>
-              Exact Boolean query
-              <textarea
-                name="query"
-                rows={7}
-                required
-                placeholder={'("frontend" OR "React") NOT ("senior" OR "lead")'}
-              />
-            </label>
-            <p className="muted text-sm">
-              Use uppercase AND, OR, and NOT. Your query is saved exactly as
-              entered.
-            </p>
-            {formError && (
-              <p className="form-error" role="alert">
-                {formError}
-              </p>
-            )}
-            <div className="dialog-actions">
-              <Button type="button" onClick={() => setModal(null)}>
-                Cancel
-              </Button>
-              <Button type="submit" className="primary">
-                Save preset <Check size={17} />
-              </Button>
-            </div>
-          </form>
-        </ModalFrame>
-      )}
-      {modal?.type === "query" && (
-        <ModalFrame
-          title={modal.preset.name}
-          description={`${modal.preset.query.length} characters · Full exact Boolean query`}
-          close={() => setModal(null)}
-        >
-          <div className="full-query">
-            <QueryText query={modal.preset.query} />
-          </div>
-          <div className="dialog-actions">
-            <Button onClick={() => openModal({ type: "preset" })}>
-              Create a variant <Plus size={16} />
-            </Button>
-            <Button
-              className="primary"
-              onClick={() => copy(modal.preset.query)}
-            >
-              <Copy size={17} /> Copy exact query
-            </Button>
-          </div>
-        </ModalFrame>
-      )}
       {modal?.type === "source" && (
         <ModalFrame
           title={displayGroupName(modal.group)}
@@ -1472,7 +1206,7 @@ export default function App() {
       {modal?.type === "inspect" && (
         <ModalFrame
           title="Your generated search"
-          description={`${displayGroupName(modal.result.group)} · ${modal.result.preset.name}`}
+          description={`${displayGroupName(modal.result.group)} · ${presetLabel(modal.result.preset)}`}
           close={() => setModal(null)}
         >
           <div className="validated-label">
@@ -1545,51 +1279,6 @@ export default function App() {
             >
               Open LinkedIn <ArrowSquareOut size={16} />
             </a>
-          </div>
-        </ModalFrame>
-      )}
-      {modal?.type === "help" && (
-        <ModalFrame
-          title="A more focused way forward"
-          description="Searchdesk brings your company collections and Boolean queries together."
-          close={() => setModal(null)}
-        >
-          <div className="help-steps">
-            {[
-              {
-                n: 1,
-                title: "Choose your companies",
-                text: "Select one or more company groups. Each group keeps its complete company ID list and original source.",
-              },
-              {
-                n: 2,
-                title: "Set your search intent",
-                text: "Choose an exact Boolean preset or create one of your own. Adjust the date, location, and sort.",
-              },
-              {
-                n: 3,
-                title: "Find your next move",
-                text: "Generate a link per group, then open, copy, or export your searches. Check the active filters on LinkedIn.",
-              },
-            ].map((s) => (
-              <div key={s.n}>
-                <span className="step-number">{s.n}</span>
-                <div>
-                  <h3>{s.title}</h3>
-                  <p>{s.text}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="help-note">
-            <Info size={18} /> Searchdesk generates URLs locally. Live results
-            and filtering depend on LinkedIn; links are labeled as not live
-            verified. Custom groups and presets are saved only in this browser.
-          </p>
-          <div className="dialog-actions">
-            <Button className="primary" onClick={() => setModal(null)}>
-              Let’s get started <ArrowRight size={17} />
-            </Button>
           </div>
         </ModalFrame>
       )}

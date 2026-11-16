@@ -16,25 +16,25 @@ Open the printed local URL. Production build: `npm run build`. Run the data and 
 ## Features
 
 - All 16 company groups in a vertical list of full-width LinkedIn buttons, with accurate labels and unchanged counts: 980 company references and 839 distinct IDs. Click any group to open a search with the current query and filters; use checkboxes for batches.
-- Two exact original Boolean presets, plus the later New Grad · Software & AI example as the default preset. Its query joins early-career terms AND software/AI role titles.
+- Only the two exact supplied Boolean queries: New Graduate (default) and Software & Development. Retired or custom queries are removed from saved configuration on load; saved company groups are retained.
 - Separate batch searches by default; optional stable-deduplicated union mode.
 - Date, United States/anywhere location, and recency/relevance filters.
 - Per-search open, copy, full URL inspection, bulk copy, CSV export, and full group/preset matrix export.
-- Add groups by parsing pasted HTTPS LinkedIn Jobs URLs; create separate custom query variants.
+- Add groups by parsing pasted HTTPS LinkedIn Jobs URLs.
 - Favorites, 20 recent searches, local persistence, and non-destructive versioned JSON import/export.
 - Responsive navigation, native checkboxes/radios/selects, Radix dialogs, focus restoration, and reduced-motion support.
 
 ## Data and source preservation
 
-The exact source data is in `src/data/seed.json`. To extend the library, use the application or add a new unique ID to this file. Each group needs a name, numeric string `company_ids`, and its unchanged original `source_url`. The ordered IDs must match the original URL's `f_C` parameter. Built-in display names use the actual ID count; their original saved names remain in the seed and JSON configuration. Queries are plain strings: preserve their content exactly. The earlier 50-company reference remains outside the core groups. Later built-in presets are added in `src/catalogue.ts`, so the original seed file stays intact.
+The exact source data is in `src/data/seed.json`. To extend the library, use the application or add a new unique ID to this file. Each group needs a name, numeric string `company_ids`, and its unchanged original `source_url`. The ordered IDs must match the original URL's `f_C` parameter. Built-in display names use the actual ID count; their original saved names remain in the seed and JSON configuration. Queries are plain strings: preserve their content exactly. The earlier 50-company reference remains outside the core groups. The fixed two-preset catalogue and saved-data migration live in `src/catalogue.ts`.
 
-Original built-in entries are protected from conflicting JSON imports. Imports validate completely before merging. They never replace an existing original query with an edited version; use a distinct preset ID for a variant. All custom data is local to the current browser and origin. Use JSON export to move or back up your library.
+Original built-in entries are protected from conflicting JSON imports. Imports validate completely before merging. They never replace an original query with an edited version, and additional presets are not imported. All custom data is local to the current browser and origin. Use JSON export to move or back up your library.
 
 ## Validation and limits
 
 Generated links use `/jobs/search-results/`, with `%20`-encoded spaces, the selected exact query in `keywords`, and the selected group IDs in `f_C`. Date, location, and sort come from the builder controls. Source job IDs and tracking parameters are excluded.
 
-The tests compare the original 32 group/query combinations against the independently provided CSV by decoded parameters (the route now follows the user’s later `/jobs/search-results/` example), and compare the new default query against that exact example URL. They verify exact query/ID round trips and original source preservation, reject malformed imports, check stable unions and CSV escaping, and exercise the main UI flow in a DOM environment.
+The tests compare the original 32 group/query combinations against the independently provided CSV by decoded parameters, and verify that saved data restores only the two original exact queries. They verify exact query/ID round trips and original source preservation, reject malformed imports, check stable unions and CSV escaping, and exercise the main UI flow in a DOM environment.
 
 Production compilation and DOM interaction tests are automated. The native browser preview service was unavailable during this build, so visual checks at desktop/mobile sizes and live LinkedIn filter verification remain unverified. The CSS includes layouts for 375px, tablet, landscape, and desktop widths, plus reduced motion and touch-target rules, but these are not a substitute for visual browser QA.
 

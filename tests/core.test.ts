@@ -192,28 +192,32 @@ test("CSV exports every pair and safely quotes custom names and full URLs", () =
   assert.ok(text.includes(matrix[0].url));
 });
 
-test("the later example produces the same query, company filter, geography and date on the results route", async () => {
-  const { examplePreset, catalogue } = await import("../src/catalogue.ts");
-  const fixture = JSON.parse(
-    readFileSync(
-      new URL("./fixtures/linkedin-example.json", import.meta.url),
-      "utf8",
-    ),
+test("the catalogue exposes only the two original exact queries and retires saved extras without losing companies", async () => {
+  const { catalogue, mergeCatalogue } = await import("../src/catalogue.ts");
+  assert.deepEqual(catalogue.boolean_presets, seed.boolean_presets);
+  const custom = parseGroup(
+    "My collection",
+    "https://www.linkedin.com/jobs/search/?f_C=19,23",
+    "custom-saved",
   );
-  const expected = new URL(fixture.url);
-  const group = parseGroup("Example companies", fixture.url, "example");
-  const result = new URL(generateUrl(group, examplePreset, defaults));
-  assert.equal(
-    result.origin + result.pathname,
-    expected.origin + expected.pathname,
+  const restored = mergeCatalogue({
+    ...seed,
+    groups: [...seed.groups, custom],
+    boolean_presets: [
+      ...seed.boolean_presets,
+      { id: "new-grad-software-ai", name: "Retired query", query: "legacy" },
+      { id: "custom-old", name: "Old custom query", query: "old" },
+    ],
+  });
+  assert.deepEqual(restored.boolean_presets, seed.boolean_presets);
+  assert.equal(restored.groups.length, 17);
+  assert.deepEqual(restored.groups.at(-1), custom);
+  assert.throws(
+    () =>
+      mergeCatalogue({
+        ...seed,
+        boolean_presets: [{ ...seed.boolean_presets[0], query: "edited" }],
+      }),
+    /conflicts/,
   );
-  for (const key of ["keywords", "f_C", "geoId", "f_TPR"])
-    assert.equal(result.searchParams.get(key), expected.searchParams.get(key));
-  assert.equal(group.company_ids.length, 50);
-  assert.equal(result.searchParams.get("sortBy"), "DD");
-  for (const key of ["currentJobId", "eBP", "refId", "trackingId", "start"])
-    assert.equal(result.searchParams.has(key), false);
-  assert.ok(result.href.includes("%20AND%20"));
-  assert.deepEqual(catalogue.boolean_presets.slice(0, 2), seed.boolean_presets);
-  assert.equal(group.source_url, fixture.url);
 });

@@ -2795,3 +2795,41 @@ main {
     flex-direction: column;
   }
 }
+
+/* Minimal search controls: two fixed presets and no workspace/account chrome. */
+.sidebar > nav {
+  margin-top: 32px;
+}
+.preset-panel {
+  padding: 22px 20px;
+}
+.intent-heading {
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: -0.15px;
+}
+.preset-panel .preset-options {
+  margin: 18px 0 0;
+  padding: 0;
+  overflow: visible;
+  max-height: none;
+}
+.preset-panel .preset-option {
+  min-height: 52px;
+  padding: 14px 12px;
+  gap: 12px;
+}
+.preset-panel .preset-option strong {
+  font-size: 12px;
+}
+@media (max-width: 767px) {
+  .sidebar > nav {
+    margin-top: 0;
+  }
+  .preset-panel {
+    padding: 20px 18px;
+  }
+  .preset-panel .preset-option strong {
+    font-size: 14px;
+  }
+}

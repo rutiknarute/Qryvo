@@ -181,40 +181,43 @@ test("custom group validates URL, retains exact source and IDs, persists and sta
   assert.equal(stored.groups.at(-1).source_url, url);
 });
 
-test("custom preset preserves exact spacing, source queries survive, and favorite filter works", async () => {
+test("favorites work with only the two exact preset options", async () => {
   render(<App />);
+  assert.deepEqual(
+    screen.getAllByRole("radio").map((x) => x.getAttribute("name")),
+    ["preset", "preset"],
+  );
+  assert.equal(
+    screen.queryByRole("button", { name: "Add custom preset" }),
+    null,
+  );
   await user.click(screen.getByRole("button", { name: "Favorite Top 1 (25)" }));
   await user.click(screen.getByRole("button", { name: /Favorites/ }));
   assert.equal(screen.getAllByRole("checkbox").length, 1);
   await user.click(screen.getByRole("checkbox", { name: "Select Top 1 (25)" }));
-  await user.click(screen.getByRole("button", { name: "Add custom preset" }));
-  const dialog = await screen.findByRole("dialog");
-  await user.type(
-    within(dialog).getByRole("textbox", { name: "Preset name" }),
-    "Precise & personal",
+  await user.click(
+    screen.getByRole("radio", { name: "Software & Development" }),
   );
-  const query = '  ("C++" OR "A&B") NOT "senior"  ';
-  await user.type(
-    within(dialog).getByRole("textbox", { name: "Exact Boolean query" }),
-    query,
-  );
-  await user.click(within(dialog).getByRole("button", { name: "Save preset" }));
-  await waitFor(() => assert.equal(screen.queryByRole("dialog"), null));
   await user.click(
     screen.getByRole("button", { name: /Generate search links/ }),
   );
   const link = (await screen.findByRole("link", {
     name: "Open LinkedIn",
   })) as HTMLAnchorElement;
-  assert.equal(new URL(link.href).searchParams.get("keywords"), query);
-  const stored = JSON.parse(localStorage.getItem("searchdesk-config")!);
-  assert.deepEqual(stored.boolean_presets.slice(0, 2), seed.boolean_presets);
+  assert.equal(
+    new URL(link.href).searchParams.get("keywords"),
+    seed.boolean_presets[1].query,
+  );
+  assert.deepEqual(
+    JSON.parse(localStorage.getItem("searchdesk-config")!).boolean_presets,
+    seed.boolean_presets,
+  );
 });
 
 test("JSON import adds new groups, rejects conflicts atomically, and stays available from navigation", async () => {
+  location.hash = "settings";
   render(<App />);
-  await user.click(screen.getByRole("link", { name: "Data and settings" }));
-  await screen.findByRole("heading", { name: "Your workspace. Your data." });
+  await screen.findByRole("heading", { name: "Your search library" });
   const input = screen.getByLabelText(
     "Import JSON configuration",
   ) as HTMLInputElement;
@@ -263,54 +266,71 @@ test("JSON import adds new groups, rejects conflicts atomically, and stays avail
   );
 });
 
-test("the example preset becomes available in an existing browser and the open link uses current selections", async () => {
-  const { examplePreset } = await import("../src/catalogue.ts");
-  localStorage.setItem("searchdesk-config", JSON.stringify(seed));
+test("existing browsers lose retired presets while retaining saved groups, and the selector stays minimal", async () => {
+  const custom = {
+    id: "custom-saved",
+    name: "Saved collection",
+    company_ids: ["19", "23"],
+    source_url: "https://www.linkedin.com/jobs/search/?f_C=19,23",
+  };
+  localStorage.setItem(
+    "searchdesk-config",
+    JSON.stringify({
+      ...seed,
+      groups: [...seed.groups, custom],
+      boolean_presets: [
+        ...seed.boolean_presets,
+        { id: "new-grad-software-ai", name: "Retired query", query: "legacy" },
+      ],
+    }),
+  );
   render(<App />);
-  const defaultRadio = screen.getByRole("radio", {
-    name: /New Grad · Software & AI/,
+  const newGrad = screen.getByRole("radio", {
+    name: "New Graduate",
   }) as HTMLInputElement;
-  assert.equal(defaultRadio.checked, true);
-  await user.click(screen.getByRole("checkbox", { name: "Select Top 1 (25)" }));
-  await user.click(
-    screen.getByRole("button", { name: /Generate search links/ }),
-  );
-  const opened = (await screen.findByRole("link", {
-    name: "Open LinkedIn",
-  })) as HTMLAnchorElement;
-  const first = new URL(opened.href);
-  assert.equal(first.pathname, "/jobs/search-results/");
-  assert.equal(first.searchParams.get("keywords"), examplePreset.query);
+  assert.equal(newGrad.checked, true);
+  assert.equal(screen.getAllByRole("radio").length, 2);
+  assert.equal(screen.queryByText("Retired query"), null);
+  for (const text of [
+    "Workspace",
+    "WORKSPACE",
+    "Saved on this browser",
+    "Your personal space",
+    "Help & getting started",
+    "Choose a Boolean preset.",
+    "QUERY PREVIEW",
+  ])
+    assert.equal(screen.queryByText(text), null);
+  assert.equal(screen.queryByRole("link", { name: "Data and settings" }), null);
+  assert.equal(screen.queryByRole("link", { name: "Data & settings" }), null);
+  const link = screen.getByRole("link", {
+    name: "Open Saved collection on LinkedIn",
+  }) as HTMLAnchorElement;
   assert.equal(
-    first.searchParams.get("f_C"),
-    seed.groups[0].company_ids.join(","),
+    new URL(link.href).searchParams.get("keywords"),
+    seed.boolean_presets[0].query,
   );
-  assert.equal(first.searchParams.get("geoId"), "103644278");
-  assert.equal(first.searchParams.get("f_TPR"), "r86400");
-  await user.selectOptions(screen.getByLabelText("Date posted"), "r604800");
-  await user.selectOptions(screen.getByLabelText("Location"), "");
-  await user.selectOptions(screen.getByLabelText("Sort by"), "R");
-  await user.click(
-    screen.getByRole("button", { name: /Generate search links/ }),
-  );
-  const updated = new URL(
-    (screen.getByRole("link", { name: "Open LinkedIn" }) as HTMLAnchorElement)
-      .href,
-  );
-  assert.equal(updated.searchParams.get("keywords"), examplePreset.query);
-  assert.equal(updated.searchParams.get("f_C"), first.searchParams.get("f_C"));
-  assert.equal(updated.searchParams.get("f_TPR"), "r604800");
-  assert.equal(updated.searchParams.has("geoId"), false);
-  assert.equal(updated.searchParams.get("sortBy"), "R");
+  const stored = JSON.parse(localStorage.getItem("searchdesk-config")!);
+  assert.equal(stored.groups.length, 17);
+  assert.deepEqual(stored.boolean_presets, seed.boolean_presets);
+  await user.click(screen.getByRole("link", { name: /Boolean presets/ }));
+  await screen.findByRole("heading", { name: "Boolean presets" });
+  assert.ok(screen.getByRole("heading", { name: "New Graduate" }));
+  assert.ok(screen.getByRole("heading", { name: "Software & Development" }));
+  for (const p of seed.boolean_presets)
+    assert.ok(
+      screen.getByText(
+        (_, el) => el?.tagName === "CODE" && el.textContent === p.query,
+      ),
+    );
+  assert.equal(screen.queryByText(/Exact original preset/), null);
   assert.equal(
-    JSON.parse(localStorage.getItem("searchdesk-config")!).boolean_presets
-      .length,
-    3,
+    screen.queryByRole("button", { name: "Add custom preset" }),
+    null,
   );
 });
 
 test("vertical company links have accurate names, unchanged company IDs, and open with current filters", async () => {
-  const { examplePreset } = await import("../src/catalogue.ts");
   render(<App />);
   const buttons = screen.getAllByRole("link", {
     name: /^Open .+ on LinkedIn$/,
@@ -341,7 +361,10 @@ test("vertical company links have accurate names, unchanged company IDs, and ope
     );
     const url = new URL(link.href);
     assert.equal(url.pathname, "/jobs/search-results/");
-    assert.equal(url.searchParams.get("keywords"), examplePreset.query);
+    assert.equal(
+      url.searchParams.get("keywords"),
+      seed.boolean_presets[0].query,
+    );
     assert.deepEqual(
       url.searchParams.get("f_C")!.split(","),
       seed.groups[i].company_ids,

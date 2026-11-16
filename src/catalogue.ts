@@ -1,15 +1,27 @@
 import sourceData from "./data/seed.json";
+import { mergeConfig } from "./core";
 import type { Config, Preset } from "./core";
 
-// Added from the user's later example; the two supplied original queries remain verbatim.
-export const examplePreset: Preset = {
-  id: "new-grad-software-ai",
-  name: "New Grad · Software & AI",
-  query:
-    '("new grad" OR "new graduate" OR "early career" OR "university graduate" OR "entry level") AND ("software engineer" OR "software developer" OR "AI engineer")',
-};
+// The app offers only these two exact, user-supplied queries.
+export const catalogue: Config = sourceData;
 
-export const catalogue: Config = {
-  ...sourceData,
-  boolean_presets: [...sourceData.boolean_presets, examplePreset],
-};
+export function presetLabel(preset: Preset): string {
+  return preset.id === "new-grad" ? "New Graduate" : "Software & Development";
+}
+
+// Restore saved company groups without reintroducing retired/custom queries.
+export function mergeCatalogue(
+  incoming: Config,
+  base: Config = catalogue,
+): Config {
+  const supported = new Set(catalogue.boolean_presets.map((p) => p.id));
+  return mergeConfig(
+    { ...base, boolean_presets: catalogue.boolean_presets },
+    {
+      ...incoming,
+      boolean_presets: incoming.boolean_presets.filter((p) =>
+        supported.has(p.id),
+      ),
+    },
+  );
+}
