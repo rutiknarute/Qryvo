@@ -45,7 +45,7 @@
 1256,Sony Pictures Entertainment,Previously sourced (not rechecked in this pass),https://www.linkedin.com/company/1256/,https://skrapp.io/directory/company/spe.sony.com,2,Top 2 (25-50) | Top 5 (50),"02,05",
 1337,LinkedIn,Previously sourced (not rechecked in this pass),https://www.linkedin.com/company/1337/,https://linkdapi.com/help-center/how-to-find-linkedin-urns,1,Top 2 (25-50),02,
 15088102,Dell Technologies,Previously sourced (not rechecked in this pass),https://www.linkedin.com/company/15088102/,https://skrapp.io/directory/company/dell.com,1,Top 2 (25-50),02,
-20226,,Unresolved,https://www.linkedin.com/company/20226/,,1,Top 2 (25-50),02,No reliably confirmed ID/name match in accessible sources
+20226,Splunk,Matched to LinkedIn company-page resolution,https://www.linkedin.com/company/20226/,https://www.linkedin.com/company/20226/,1,Top 2 (25-50),02,Confirmed by company-page resolution
 2830763,HashiCorp,Previously sourced (not rechecked in this pass),https://www.linkedin.com/company/2830763/,https://www.g2.com/categories/server-virtualization/small-business?order=g2_score&page=2,2,Top 2 (25-50) | Top 8-9 (100),"02,08",
 2857634,Coinbase,Previously sourced (not rechecked in this pass),https://www.linkedin.com/company/2857634/,https://skrapp.io/directory/company/coinbase.com,1,Top 2 (25-50),02,
 3039,Sony Music Entertainment,Matched to numeric ID in public dataset,https://www.linkedin.com/company/3039/,https://github.com/MarinaVr1/linkedin-job-postings-clustering/blob/main/data/companies.csv,2,Top 2 (25-50) | Top 5 (50),"02,05",
@@ -92,7 +92,7 @@
 11174522,Walmart Global Tech,Matched to numeric ID in public dataset,https://www.linkedin.com/company/11174522/,https://github.com/MarinaVr1/linkedin-job-postings-clustering/blob/main/data/companies.csv,2,Top 3 (50) | Top 7 (50),"03,07",
 1491,SAS,Previously sourced (not rechecked in this pass),https://www.linkedin.com/company/1491/,https://legiit-service.s3.amazonaws.com/c45c24ce724ad5adc12d2094469c067c/b84d4e16ee43c43c58441769181f6c0c.pdf,1,Top 3 (50),03,
 30772606,Cohere Health,Matched to numeric ID in public dataset,https://www.linkedin.com/company/30772606/,https://github.com/MarinaVr1/linkedin-job-postings-clustering/blob/main/data/companies.csv,1,Top 3 (50),03,
-444310,,Unresolved,https://www.linkedin.com/company/444310/,,1,Top 3 (50),03,No reliably confirmed ID/name match in accessible sources
+444310,The Walt Disney Studios,Matched to LinkedIn company-page resolution,https://www.linkedin.com/company/444310/,https://www.linkedin.com/company/444310/,1,Top 3 (50),03,Confirmed by company-page resolution
 1355,DHL,Matched to numeric ID in public source,https://www.linkedin.com/company/1355/,https://skrapp.io/directory/company/dhl.com,1,Top 3 (50),03,
 1418841,GitHub,Matched to numeric ID in public source,https://www.linkedin.com/company/1418841/,https://www.g2.com/es/categories/version-control-hosting/free,1,Top 3 (50),03,
 1669,,Unresolved,https://www.linkedin.com/company/1669/,,1,Top 3 (50),03,No reliably confirmed ID/name match in accessible sources

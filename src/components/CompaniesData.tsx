@@ -6,6 +6,12 @@ import companyNames from "../data/company-names.json";
 
 const names: Record<string, string> = companyNames.names;
 
+function companyNameForId(id: string) {
+  const normalizedId = String(id).trim();
+  const name = names[normalizedId]?.trim();
+  return name || "Name unavailable";
+}
+
 export default function CompaniesData({ groups }: { groups: Group[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
   return (
@@ -41,18 +47,23 @@ export default function CompaniesData({ groups }: { groups: Group[] }) {
                   <ul className="company-directory">
                     {group.company_ids.map((id, index) => (
                       <li key={`${id}-${index}`}>
+                        {(() => {
+                          const companyName = companyNameForId(id);
+                          return (
                         <a
                           href={`https://www.linkedin.com/company/${id}/`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          aria-label={`${names[id] ? names[id] + ", " : ""}Company ID ${id}`}
+                          aria-label={`${companyName !== "Name unavailable" ? companyName + ", " : ""}Company ID ${id}`}
                         >
                           <span className="company-record">
-                            <strong>{names[id] || "Name unavailable"}</strong>
+                            <strong>{companyName}</strong>
                             <span className="company-record-id">ID: {id}</span>
                           </span>
                           <ArrowSquareOut size={15} />
                         </a>
+                          );
+                        })()}
                       </li>
                     ))}
                   </ul>
